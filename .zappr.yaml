@@ -1,0 +1,11 @@
+approvals:
+  minimum: 3
+
+commit:
+  message:
+    patterns:
+      - "#[0-9]+"
+
+X-Zalando-Team: "glitch"
+
+X-Zalando-Type: code
