@@ -1,6 +1,7 @@
 package org.zalando.conf4s
 
-import cats.Eval
+import cats.{Eval, Functor}
+import cats.syntax.functor._
 import org.bitbucket.inkytonik.kiama.==>
 import org.bitbucket.inkytonik.kiama.rewriting.Rewriter._
 import org.bitbucket.inkytonik.kiama.rewriting.Strategy
@@ -29,6 +30,9 @@ trait ConfigRewriter {
     */
   def replace[S : ClassTag, G](s: S, graph: G): G =
     replaceWithStrategy(replaceStrategy[S](s), graph)
+
+  def replaceF[S : ClassTag, G, F[_] : Functor](fs: F[S], graph: G): F[G] =
+    fs.map(replace(_, graph))
 
   /**
     * Replace with a given strategy
