@@ -7,8 +7,7 @@ lazy val kiamaVersion      = "2.0.0"
 lazy val specs2Version     = "3.8.5"
 lazy val shapelessVersion  = "2.3.2"
 
-libraryDependencies ++=
-  cats ++ kiama ++ shapeless ++ specs2
+libraryDependencies ++= cats ++ kiama ++ shapeless ++ specs2
 
 lazy val kiama =
   Seq("org.bitbucket.inkytonik.kiama" %% "kiama" % kiamaVersion)
