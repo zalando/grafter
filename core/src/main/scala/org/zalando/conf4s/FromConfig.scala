@@ -1,8 +1,11 @@
 package org.zalando.conf4s
 
-import shapeless.{::, HNil, HList, Witness, LabelledGeneric}
+import shapeless.{::, HNil, HList, Witness, LabelledGeneric, Lazy}
 import shapeless.labelled.{FieldType, field}
 
+import scala.annotation.implicitNotFound
+
+@implicitNotFound("Could not find an implicit FromConfig[${A}, ${B}]. Please make sure all member of ${B} have an instance of FromConfig[${A}, ...] and the implicit declaration has explicit type annotation.")
 trait FromConfig[A, B] {
 
   def apply(a: A): B
@@ -18,24 +21,24 @@ object FromConfig {
 
   implicit def aFromConfigHCons[A, K <: Symbol, H, T <: HList](implicit
     key: Witness.Aux[K],
-    hFromConfigA: FromConfig[A, H],
-    tFromConfigA: FromConfig[A, T]
+    hFromConfigA: Lazy[FromConfig[A, H]],
+    tFromConfigA: Lazy[FromConfig[A, T]]
   ): FromConfig[A, FieldType[K, H] :: T] = new FromConfig[A, FieldType[K, H] :: T] {
 
     def apply(a: A): FieldType[K,H] :: T = {
-      val h = hFromConfigA(a)
-      val t = tFromConfigA(a)
+      val h = hFromConfigA.value(a)
+      val t = tFromConfigA.value(a)
       field[K](h) :: t
     }
   }
 
   implicit def genericFromConfig[A, B, ReprB](implicit
     gen: LabelledGeneric.Aux[B, ReprB],
-    reprbFromConfigA: FromConfig[A, ReprB]
+    reprbFromConfigA: Lazy[FromConfig[A, ReprB]]
   ): FromConfig[A, B] = new FromConfig[A, B] {
 
     def apply(a: A): B = {
-      val internal = reprbFromConfigA(a)
+      val internal = reprbFromConfigA.value(a)
       gen.from(internal)
     }
   }
