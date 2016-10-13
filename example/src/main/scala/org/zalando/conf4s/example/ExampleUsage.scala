@@ -3,6 +3,9 @@ package org.zalando.conf4s.example
 import cats.Eval
 import cats.data.{XorT, Xor}
 import org.zalando.conf4s.{FromConfig, ConfigRewriter}
+import ConfigRewriter._
+import org.zalando.conf4s.env._
+import org.bitbucket.inkytonik.kiama.==>
 
 
 case class AppConfig(settingA: SettingA, settingB: SettingB)
@@ -28,20 +31,15 @@ case class ExampleApp(compA: CompA, compB: CompB)
 object Example  {
 
   case class EnvError(message: String)
-  type EnvIO[A] = XorT[Eval, EnvError, A]
 
-  val loadSettingBFromEnv: EnvIO[Int] = XorT {
-    Eval.always {
-      for {
-        raw <- Xor.fromOption(sys.env.get("SETTING_B"), EnvError("no value found for env SETTING_B"))
-        v   <- Xor.catchNonFatal(raw.toInt).leftMap(_ => EnvError(s"can not convert $raw to Int"))
-      } yield v
-    }
-  }
+  val loadSettingBFromEnv: EnvIO[Int] = readEnv[Int]("SETTINGB_SB")
 
   val appconfig = AppConfig(SettingA("sa"), SettingB(0))
   val app: ExampleApp = FromConfig.create[AppConfig, ExampleApp](appconfig)
 
-  val replacedConfig = ConfigRewriter.replaceF(loadSettingBFromEnv, appconfig)
+  val replacedConfig = loadSettingBFromEnv.map(sb => {
+    val replaceSb: SettingB ==> Option[SettingB] = { case settingb: SettingB => Some(settingb.copy(sb = sb)) }
+    appconfig.replaceWith(replaceSb)
+  })
   val envApp: EnvIO[ExampleApp] = replacedConfig.map(FromConfig.create[AppConfig, ExampleApp])
 }
