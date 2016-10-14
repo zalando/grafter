@@ -8,7 +8,7 @@ class FromConfigSpec extends Specification { def is = s2"""
 
   def initApplication = {
 
-    val allowed    = List("Max", "Musterman")
+    val allowed    = List("lookup price", "lookup stock")
     val httpConf   = HttpServerConfig("0.0.0.0", 80)
     val dbUri      = "localhost/somedb"
 
