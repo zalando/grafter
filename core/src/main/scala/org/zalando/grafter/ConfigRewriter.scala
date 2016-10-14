@@ -1,4 +1,4 @@
-package org.zalando.conf4s
+package org.zalando.grafter
 
 import cats.Eval
 import org.bitbucket.inkytonik.kiama.==>

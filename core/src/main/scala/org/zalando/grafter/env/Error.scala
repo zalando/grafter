@@ -1,4 +1,4 @@
-package org.zalando.conf4s.env
+package org.zalando.grafter.env
 
 sealed trait EnvError
 final case class EnvNotFound(name: String) extends EnvError

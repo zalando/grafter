@@ -1,4 +1,4 @@
-package org.zalando.conf4s
+package org.zalando.grafter
 
 import org.specs2.Specification
 

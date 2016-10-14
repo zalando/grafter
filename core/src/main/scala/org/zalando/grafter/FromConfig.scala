@@ -1,4 +1,4 @@
-package org.zalando.conf4s
+package org.zalando.grafter
 
 import shapeless.{::, HNil, HList, Witness, LabelledGeneric, Lazy}
 import shapeless.labelled.{FieldType, field}

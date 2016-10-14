@@ -1,4 +1,4 @@
-package org.zalando.conf4s.env
+package org.zalando.grafter.env
 
 import cats.data.Xor
 

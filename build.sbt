@@ -19,25 +19,21 @@ scalacOptions in Test ++= Seq(
   "-Yrangepos"
 )
 
+scalaVersion in ThisBuild := currentScalaVersion
+
 lazy val currentScalaVersion = "2.11.8"
+
+lazy val root = (project in file(".")).
+  aggregate(core)
+
+lazy val core = (project in file("core")).
+  settings(coreSettings: _*)
+
+lazy val coreSettings = Seq(
+  name := "grafter"
+) ++ commonSettings
 
 lazy val commonSettings = Seq(
   organization := "org.zalando",
   scalaVersion := currentScalaVersion
 )
-
-lazy val coreSettings = Seq(
-  name := "conf4s"
-) ++ commonSettings
-
-lazy val core = (project in file("core")).
-  settings(coreSettings: _*)
-
-lazy val example = (project in file("example")).
-  settings(commonSettings: _*).
-  dependsOn(core)
-
-lazy val root = (project in file(".")).
-  aggregate(core, example)
-
-scalaVersion in ThisBuild := currentScalaVersion
