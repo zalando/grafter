@@ -16,7 +16,7 @@ import scala.reflect.ClassTag
   * with other implementations.
   *
   */
-trait ConfigRewriter {
+trait Rewriter {
 
   /**
     * Take the first value of a given type (approximated with a ClassTag) and replace it everywhere in the graph
@@ -98,7 +98,7 @@ trait ConfigRewriter {
   }
 }
 
-object ConfigRewriter extends ConfigRewriter with ConfigRewriterSyntax
+object Rewriter extends Rewriter with RewriterSyntax
 
 /**
   * Syntactic sugar for rewriting nodes in a graph
@@ -107,24 +107,24 @@ object ConfigRewriter extends ConfigRewriter with ConfigRewriterSyntax
   *
   *  g.singleton[T].replace[S](s)
   */
-trait ConfigRewriterSyntax {
+trait RewriterSyntax {
 
   implicit class Rewrite[G](graph: G) {
     def singleton[S : ClassTag]: G =
-      ConfigRewriter.singleton[S, G](graph)
+      Rewriter.singleton[S, G](graph)
 
     def replace[S : ClassTag](s: S): G =
-      ConfigRewriter.replace[S, G](s, graph)
+      Rewriter.replace[S, G](s, graph)
 
     def replaceWith[T](s: T ==> Option[T]): G =
-      ConfigRewriter.replaceWith(s, graph)
+      Rewriter.replaceWith(s, graph)
 
     def start: Eval[List[StartResult]] =
-      ConfigRewriter.start(graph)
+      Rewriter.start(graph)
   }
 }
 
-object ConfigRewriterSyntax extends ConfigRewriterSyntax
+object RewriterSyntax extends RewriterSyntax
 
 object Reflect {
 
