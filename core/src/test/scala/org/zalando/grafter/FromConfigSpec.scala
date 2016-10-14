@@ -8,46 +8,44 @@ class FromConfigSpec extends Specification { def is = s2"""
 
   def initApplication = {
 
-    val settingA = SettingA("A")
-    val settingB = SettingB(0)
-    val settingC = SettingC("C")
+    val allowed    = List("Max", "Musterman")
+    val httpConf   = HttpServerConfig("0.0.0.0", 80)
+    val dbUri      = "localhost/somedb"
 
-    val compA = ComponentA(settingA)
-    val compC = ComponentC(settingC)
-    val compB = ComponentB(settingB, compC)
+    val auth       = Authorization(allowed)
+    val server     = HttpServer(httpConf.host, httpConf.port, auth)
+    val db         = Database(dbUri)
 
-    val appconfig = AppConfig(settingA, settingB, settingC)
-    val app = FromConfig[AppConfig, ExampleApp](appconfig)
+    val appconfig  = AppConfig(allowed, httpConf, dbUri)
+    val app        = FromConfig[AppConfig, ExampleApp](appconfig)
 
-    val haveComponentA = app.compA === compA
-    val haveComponentB = app.compB === compB
+    val haveServer = app.server === server
+    val haveDb     = app.db     === db
 
-    haveComponentA and haveComponentB
+    haveServer and haveDb
   }
 
   // Helpers
 
-  case class AppConfig(settingA: SettingA, settingB: SettingB, settingC: SettingC)
-  case class SettingA(str: String)
-  case class SettingB(int: Int)
-  case class SettingC(str: String)
+  case class AppConfig(allowed: List[String], httpConf: HttpServerConfig, dbUri: String)
+  case class HttpServerConfig(host: String, port: Int)
 
-  case class ComponentA(setting: SettingA)
-  object ComponentA {
-    implicit def fromConfig: FromConfig[AppConfig, ComponentA] = FromConfig.embed(conf => ComponentA(conf.settingA))
+  case class Authorization(allowed: List[String])
+  object Authorization {
+    implicit def fromConfig: FromConfig[AppConfig, Authorization] = FromConfig.embed(conf => Authorization(conf.allowed))
   }
 
-  case class ComponentB(setting: SettingB, componentC: ComponentC)
-  object ComponentB {
+  case class HttpServer(host: String, port: Int, auth: Authorization)
+  object HttpServer {
     implicit def fromConfig(implicit
-      cFromConfig: FromConfig[AppConfig, ComponentC]): FromConfig[AppConfig, ComponentB] =
-      FromConfig.embed(conf => ComponentB(conf.settingB, cFromConfig(conf)))
+      authFromConfig: FromConfig[AppConfig, Authorization]): FromConfig[AppConfig, HttpServer] =
+      FromConfig.embed(conf => HttpServer(conf.httpConf.host, conf.httpConf.port, authFromConfig(conf)))
   }
 
-  case class ComponentC(setting: SettingC)
-  object ComponentC {
-    implicit def fromConfig: FromConfig[AppConfig, ComponentC] = FromConfig.embed(conf => ComponentC(conf.settingC))
+  case class Database(dbUri: String)
+  object Database {
+    implicit def fromConfig: FromConfig[AppConfig, Database] = FromConfig.embed(conf => Database(conf.dbUri))
   }
 
-  case class ExampleApp(compA: ComponentA, compB: ComponentB)
+  case class ExampleApp(server: HttpServer, db: Database)
 }
