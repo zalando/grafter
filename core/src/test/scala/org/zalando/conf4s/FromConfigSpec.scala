@@ -17,7 +17,7 @@ class FromConfigSpec extends Specification { def is = s2"""
     val compB = ComponentB(settingB, compC)
 
     val appconfig = AppConfig(settingA, settingB, settingC)
-    val app = FromConfig.create[AppConfig, ExampleApp](appconfig)
+    val app = FromConfig[AppConfig, ExampleApp](appconfig)
 
     val haveComponentA = app.compA === compA
     val haveComponentB = app.compB === compB
@@ -34,26 +34,19 @@ class FromConfigSpec extends Specification { def is = s2"""
 
   case class ComponentA(setting: SettingA)
   object ComponentA {
-    implicit def fromConfig: FromConfig[AppConfig, ComponentA] = new FromConfig[AppConfig, ComponentA] {
-      def apply(conf: AppConfig): ComponentA = ComponentA(conf.settingA)
-    }
+    implicit def fromConfig: FromConfig[AppConfig, ComponentA] = FromConfig.embed(conf => ComponentA(conf.settingA))
   }
 
   case class ComponentB(setting: SettingB, componentC: ComponentC)
   object ComponentB {
     implicit def fromConfig(implicit
       cFromConfig: FromConfig[AppConfig, ComponentC]): FromConfig[AppConfig, ComponentB] =
-      new FromConfig[AppConfig, ComponentB] {
-
-        def apply(conf: AppConfig): ComponentB = ComponentB(conf.settingB, cFromConfig(conf))
-      }
+      FromConfig.embed(conf => ComponentB(conf.settingB, cFromConfig(conf)))
   }
 
   case class ComponentC(setting: SettingC)
   object ComponentC {
-    implicit def fromConfig: FromConfig[AppConfig, ComponentC] = new FromConfig[AppConfig, ComponentC] {
-      def apply(conf: AppConfig): ComponentC = ComponentC(conf.settingC)
-    }
+    implicit def fromConfig: FromConfig[AppConfig, ComponentC] = FromConfig.embed(conf => ComponentC(conf.settingC))
   }
 
   case class ExampleApp(compA: ComponentA, compB: ComponentB)

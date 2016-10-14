@@ -8,11 +8,11 @@ trait FromStr[A] {
 
 object FromStr {
 
-  implicit val strFromStr = new FromStr[String] {
+  implicit val strFromStr: FromStr[String] = new FromStr[String] {
     def apply(str: String) = Xor.Right(str)
   }
 
-  implicit val intFromStr = new FromStr[Int] {
+  implicit val intFromStr: FromStr[Int] = new FromStr[Int] {
     def apply(str: String): Xor[FromStrError, Int] =
       Xor.catchNonFatal(str.toInt).
         leftMap(_ => FromStrError(s"Can not transform $str to Int"))

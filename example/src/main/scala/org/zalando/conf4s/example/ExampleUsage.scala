@@ -14,16 +14,12 @@ case class SettingB(sb: Int)
 
 case class CompA(setting: SettingA)
 object CompA {
-  implicit def fromConfig = new FromConfig[AppConfig, CompA] {
-    def apply(conf: AppConfig): CompA = CompA(conf.settingA)
-  }
+  implicit def fromConfig: FromConfig[AppConfig, CompA] = FromConfig.embed(conf => CompA(conf.settingA))
 }
 
 case class CompB(setting: SettingB)
 object CompB {
-  implicit def fromConfig = new FromConfig[AppConfig, CompB] {
-    def apply(conf: AppConfig): CompB = CompB(conf.settingB)
-  }
+  implicit def fromConfig: FromConfig[AppConfig, CompB] = FromConfig.embed(conf => CompB(conf.settingB))
 }
 
 case class ExampleApp(compA: CompA, compB: CompB)
@@ -35,11 +31,11 @@ object Example  {
   val loadSettingBFromEnv: EnvIO[Int] = readEnv[Int]("SETTINGB_SB")
 
   val appconfig = AppConfig(SettingA("sa"), SettingB(0))
-  val app: ExampleApp = FromConfig.create[AppConfig, ExampleApp](appconfig)
+  val app: ExampleApp = FromConfig[AppConfig, ExampleApp](appconfig)
 
   val replacedConfig = loadSettingBFromEnv.map(sb => {
     val replaceSb: SettingB ==> Option[SettingB] = { case settingb: SettingB => Some(settingb.copy(sb = sb)) }
     appconfig.replaceWith(replaceSb)
   })
-  val envApp: EnvIO[ExampleApp] = replacedConfig.map(FromConfig.create[AppConfig, ExampleApp])
+  val envApp: EnvIO[ExampleApp] = replacedConfig.map(FromConfig[AppConfig, ExampleApp])
 }
