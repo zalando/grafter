@@ -2,7 +2,7 @@ import sbt.Keys._
 import sbt._
 import com.ambiata._
 
-lazy val http4sMatchers = (project in file(".")).
+lazy val grafter = (project in file(".")).
   settings(
     commonSettings      ++
     compilationSettings ++
