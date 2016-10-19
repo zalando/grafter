@@ -3,7 +3,9 @@ package org.zalando.grafter
 import org.specs2.Specification
 
 class FromConfigSpec extends Specification { def is = s2"""
-    FromConfig can be derived genericly $initApplication
+
+  FromConfig can be derived generically $initApplication
+
 """
 
   def initApplication = {
@@ -17,7 +19,7 @@ class FromConfigSpec extends Specification { def is = s2"""
     val db         = Database(dbUri)
 
     val appconfig  = AppConfig(allowed, httpConf, dbUri)
-    val app        = FromConfig[AppConfig, ExampleApp](appconfig)
+    val app        = FromConfig[AppConfig, MicroService](appconfig)
 
     val haveServer = app.server === server
     val haveDb     = app.db     === db
@@ -31,11 +33,14 @@ class FromConfigSpec extends Specification { def is = s2"""
   case class HttpServerConfig(host: String, port: Int)
 
   case class Authorization(allowed: List[String])
+
   object Authorization {
-    implicit def fromConfig: FromConfig[AppConfig, Authorization] = FromConfig.embed(conf => Authorization(conf.allowed))
+    implicit def fromConfig: FromConfig[AppConfig, Authorization] =
+      FromConfig.embed(conf => Authorization(conf.allowed))
   }
 
   case class HttpServer(host: String, port: Int, auth: Authorization)
+
   object HttpServer {
     implicit def fromConfig(implicit
       authFromConfig: FromConfig[AppConfig, Authorization]): FromConfig[AppConfig, HttpServer] =
@@ -43,9 +48,19 @@ class FromConfigSpec extends Specification { def is = s2"""
   }
 
   case class Database(dbUri: String)
+
   object Database {
-    implicit def fromConfig: FromConfig[AppConfig, Database] = FromConfig.embed(conf => Database(conf.dbUri))
+    implicit def fromConfig: FromConfig[AppConfig, Database] =
+      FromConfig.embed(conf => Database(conf.dbUri))
   }
 
-  case class ExampleApp(server: HttpServer, db: Database)
+  case class ServiceName(value: String)
+
+  object ServiceName {
+    implicit def fromConfig: FromConfig[AppConfig, ServiceName] =
+      FromConfig.const(ServiceName("my first microservice"))
+  }
+
+  case class MicroService(server: HttpServer, db: Database, name: ServiceName)
+
 }

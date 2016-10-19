@@ -5,6 +5,9 @@ import shapeless.labelled.{FieldType, field}
 
 import scala.annotation.implicitNotFound
 
+/**
+ * Get an element of type B from a Config of type A
+ */
 @implicitNotFound("Could not find an implicit FromConfig[${A}, ${B}]. Please make sure all members of ${B} have an instance of FromConfig[${A}, ...] and the implicit declarations have explicit type annotations.")
 trait FromConfig[A, B] {
 
@@ -20,7 +23,7 @@ object FromConfig {
   }
 
   def embed[A, B](f: A => B): FromConfig[A, B] = new FromConfig[A, B] {
-    def apply(a: A):B = f(a)
+    def apply(a: A): B = f(a)
   }
 
   implicit def hnilFromConfigA[A]: FromConfig[A, HNil] = new FromConfig[A, HNil] {
