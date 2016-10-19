@@ -1,5 +1,5 @@
 approvals:
-  minimum: 3
+  minimum: 2
 
 commit:
   message:
