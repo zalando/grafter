@@ -18,16 +18,17 @@ node("kraken") {
     checkout scm
     stash name: 'source'
   }
-  stage("Run tests") {
+  stage("Run tests and publish test results") {
     unstash 'source'
-    sh "/tools/run :sbt -- sbt clean test"
+    sh '/tools/run :sbt -- sbt ";clean;testOnly * -- console junitxml;coverage;coverageReport"'
+    junit 'target/test-reports/*.xml'
   }
 }
 
 if ("master".equals(env.BRANCH_NAME)) {
   node("kraken") {
     stage("Publish a new version") {
-      unstash 'source'
+      checkout scm
       sh "/tools/run :sbt -- sbt publish"
     }
   }
