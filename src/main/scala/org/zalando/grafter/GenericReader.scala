@@ -11,10 +11,7 @@ import cats.data._
  *
  * See this blog post for more details: https://meta.plasm.us/posts/2015/11/08/type-classes-and-generic-derivation
  */
-object GenericReader {
-
-  def apply[R, A](implicit ev: Reader[R, A]): Reader[R, A] =
-    ev
+trait GenericReader {
 
   implicit def hnilReader[R]: Reader[R, HNil] =
     Reader(_ => HNil)
@@ -31,4 +28,11 @@ object GenericReader {
     repr: Lazy[Reader[R, Repr]]
   ): Reader[R, A] =
     Reader((r: R) => gen.from(repr.value(r)))
+}
+
+object GenericReader extends GenericReader {
+
+  def apply[R, A](implicit ev: Reader[R, A]): Reader[R, A] =
+    ev
+
 }
