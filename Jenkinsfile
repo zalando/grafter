@@ -29,7 +29,7 @@ if ("master".equals(env.BRANCH_NAME)) {
   node("kraken") {
     stage("Publish a new version") {
       checkout scm
-      sh "/tools/run :sbt -- sbt publish"
+      sh "/tools/run :sbt -- sbt clean publish"
     }
   }
 }
