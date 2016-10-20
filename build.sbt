@@ -22,7 +22,7 @@ lazy val testSettings = Seq(
   scalacOptions in Test ++= Seq("-Yrangepos"),
   testFrameworks in Test := Seq(TestFrameworks.Specs2),
   testOptions in Test += Tests.Filter(s => !s.endsWith("Specification")),
-  coverageEnabled := true
+  coverageEnabled := false
 )
 
 lazy val compilationSettings = Seq(
