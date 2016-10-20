@@ -21,7 +21,7 @@ class GenericReaderSpec extends Specification { def is = s2"""
 
     val auth       = Authorization(allowed)
     val server     = HttpServer(httpConf.host, httpConf.port, auth)
-    val db         = Database(dbUri)
+    val db         = PostgresDatabase(dbUri)
 
     val appConfig  = AppConfig(allowed, httpConf, dbUri)
 
@@ -64,11 +64,18 @@ class GenericReaderSpec extends Specification { def is = s2"""
       Reader(conf => HttpServer(conf.httpConf.host, conf.httpConf.port, configure[Authorization](conf)))
   }
 
-  case class Database(dbUri: String)
+  trait Database
 
   object Database {
     implicit def reader: AppConfigReader[Database] =
-      Reader(conf => Database(conf.dbUri))
+      PostgresDatabase.reader
+  }
+
+  case class PostgresDatabase(dbUri: String) extends Database
+
+  object PostgresDatabase {
+    implicit def reader: AppConfigReader[PostgresDatabase] =
+      Reader(conf => PostgresDatabase(conf.dbUri))
   }
 
   case class MicroService(server: HttpServer, db: Database)
