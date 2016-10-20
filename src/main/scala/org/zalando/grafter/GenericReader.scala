@@ -28,6 +28,16 @@ trait GenericReader {
     repr: Lazy[Reader[R, Repr]]
   ): Reader[R, A] =
     Reader((r: R) => gen.from(repr.value(r)))
+
+  /**
+   * this implicit conversion is useful to get contravariance for Reader instances
+   * because cats' Reader is not contravariant and should be:
+   *
+   * If you have a Reader[C, Apple] you also have a Reader[C, Fruit] when Apple <: Fruit
+   */
+  implicit def widenReader[R, A, B](r: Reader[R, A])(implicit ev: A <:< B): Reader[R, B] =
+    r.map(a => ev(a))
+
 }
 
 object GenericReader extends GenericReader {
