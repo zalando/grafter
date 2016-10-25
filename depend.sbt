@@ -21,7 +21,8 @@ lazy val cats = Seq(
 lazy val specs2 = Seq(
   "org.specs2" %% "specs2-core",
   "org.specs2" %% "specs2-scalacheck",
-  "org.specs2" %% "specs2-cats"
+  "org.specs2" %% "specs2-cats",
+  "org.specs2" %% "specs2-junit"
 ).map(_ % specs2Version % "test")
 
 lazy val shapeless =
