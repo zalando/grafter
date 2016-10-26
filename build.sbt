@@ -2,6 +2,8 @@ import sbt.Keys._
 import sbt._
 import com.ambiata._
 
+logLevel := Level.Debug
+
 lazy val grafter = (project in file(".")).
   settings(
     commonSettings      ++
