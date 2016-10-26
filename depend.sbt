@@ -1,6 +1,7 @@
 resolvers ++= Seq(
   Resolver.sonatypeRepo("releases"),
-  Resolver.defaultLocal
+  Resolver.defaultLocal,
+  "zalando-releases" at "https://maven.zalando.net/content/repositories/releases"
 )
 
 lazy val catsVersion       = "0.7.2"
