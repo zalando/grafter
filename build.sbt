@@ -2,6 +2,8 @@ import sbt.Keys._
 import sbt._
 import com.ambiata._
 
+logLevel := Level.Debug
+
 lazy val grafter = (project in file(".")).
   settings(
     commonSettings      ++
@@ -14,7 +16,7 @@ lazy val commonSettings = Seq(
   organization         := "org.zalando",
   name                 := "grafter",
   scalaVersion         := "2.11.8",
-  version in ThisBuild := "1.0.0"
+  version in ThisBuild := "1.1.0"
 )
 
 lazy val testSettings = Seq(
@@ -22,7 +24,7 @@ lazy val testSettings = Seq(
   scalacOptions in Test ++= Seq("-Yrangepos"),
   testFrameworks in Test := Seq(TestFrameworks.Specs2),
   testOptions in Test += Tests.Filter(s => !s.endsWith("Specification")),
-  coverageEnabled := true
+  coverageEnabled := false
 )
 
 lazy val compilationSettings = Seq(
@@ -46,7 +48,7 @@ lazy val compilationSettings = Seq(
 )
 
 lazy val publishSettings = Seq(
-  publishTo := Option("zalando nexus" at "https://maven.zalando.net/content/repositories/releases"),
+  publishTo := Option("zalando-releases" at "https://maven.zalando.net/content/repositories/releases"),
   publishMavenStyle := true
 ) ++
   promulgateVersionSettings
