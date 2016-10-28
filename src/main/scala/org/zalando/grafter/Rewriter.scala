@@ -96,6 +96,35 @@ trait Rewriter {
 
     results.toList
   }
+
+  /**
+   * stop components from the top down
+   * we try to stop components even if previous components fail to stop
+   */
+  def stop[G](graph: G): Eval[List[StopResult]] = Eval.later {
+    // this map is there to make sure we don't stop a node twice
+    // this relies on the assumption that different components have different hashcodes
+    var stopped: Vector[Int] = Vector.empty
+
+    // this stores the results
+    val results: ListBuffer[StopResult] = new ListBuffer[StopResult]
+
+    val stopStrategy =
+      everywheretd(strategy[Any] {
+        case s: Stop =>
+          if (stopped.contains(s.hashCode)) Option(s)
+          else {
+            val result = s.stop.value
+            results.append(result)
+            stopped = stopped :+ s.hashCode
+            Option(s)
+          }
+      })
+
+    rewrite(stopStrategy)(graph)
+
+    results.toList
+  }
 }
 
 object Rewriter extends Rewriter with RewriterSyntax
@@ -121,6 +150,9 @@ trait RewriterSyntax {
 
     def start: Eval[List[StartResult]] =
       Rewriter.start(graph)
+
+    def stop: Eval[List[StopResult]] =
+      Rewriter.stop(graph)
   }
 }
 

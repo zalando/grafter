@@ -13,9 +13,14 @@ class RewriterSpec extends Specification { def is = s2"""
    An instance of a subtype can be passed and be replaced everywhere                        $replaceWithSubtype
    An instance of a subtype with an interface can be passed and be replaced everywhere      $replaceWithInterfaceSubtype
    A replacement only works if we pass an instance of the same type                         $replaceWithDifferentType
+   
    Startable components can be started in order from the bottom up                          $startInOrder
    If a component fails to start the sequence is interrupted right away                     $stopFailedStart
    If a component throws an exception on start the sequence is interrupted right away       $stopErrorStart
+
+   All stoppable components can be stopped in order from the top down                       $stopInOrder
+   If a component fails to start the sequence is interrupted right away                     $failedStop
+   If a component throws an exception on start the sequence is interrupted right away       $errorStop
 
 """
 
@@ -103,22 +108,63 @@ class RewriterSpec extends Specification { def is = s2"""
       StartOk("d1"), StartError("e1", exception)
     )
   }
+
+  def stopInOrder =
+    Rewriter.stop(graph).value ==== List(
+      StopOk("A"),
+      StopOk("B"), StopOk("d1"), StopOk("e1"), StopOk("f1"),
+      StopOk("C"), StopOk("d2"), StopOk("e2"), StopOk("f2")
+    )
+
+  def failedStop = {
+    val failedGraph = A(
+      B(D("d1"), ESub("e1"), F1("f1")),
+      C(D("d2"), ESub("e2"), F1("f2")))
+
+    Rewriter.stop(failedGraph).value ==== List(
+      StopOk("A"),
+      StopOk("B"), StopOk("d1"), StopFailure("e1"), StopOk("f1"),
+      StopOk("C"), StopOk("d2"), StopFailure("e2"), StopOk("f2")
+    )
+  }
+
+  def errorStop = {
+    val exception = new Exception("boom")
+    val errorStop = StopResult.eval("e1")(throw exception)
+
+    val errorGraph = A(
+      B(D("d1"), new ESub("e1") { override def stop = errorStop }, F1("f1")),
+      C(D("d2"), ESub("e2"), F1("f2")))
+
+    Rewriter.stop(errorGraph).value ==== List(
+      StopOk("A"),
+      StopOk("B"), StopOk("d1"), StopError("e1", exception), StopOk("f1"),
+      StopOk("C"), StopOk("d2"), StopFailure("e2"), StopOk("f2")
+    )
+  }
+
 }
 
 object ExampleGraph {
 
-  case class D(name: String) extends Start {
+  case class D(name: String) extends Start with Stop {
     override def toString = name
 
     def start: Eval[StartResult] =
       StartResult.eval(name)(())
+
+    def stop: Eval[StopResult] =
+      StopResult.eval(name)(())
   }
 
-  class E(name: String) extends Start {
+  class E(name: String) extends Start with Stop {
     override def toString = name
 
     def start: Eval[StartResult] =
       StartResult.eval(name)(())
+
+    def stop: Eval[StopResult] =
+      StopResult.eval(name)(())
   }
 
   object E {
@@ -127,36 +173,54 @@ object ExampleGraph {
   case class ESub(name: String) extends E(name) {
     override def start: Eval[StartResult] =
       Eval.now(StartFailure(name))
+
+    override def stop: Eval[StopResult] =
+      Eval.now(StopFailure(name))
   }
 
   trait F
-  case class F1(name: String) extends F with Start {
+  case class F1(name: String) extends F with Start with Stop {
     override def toString = name
 
     def start: Eval[StartResult] =
       StartResult.eval(name)(())
+
+    def stop: Eval[StopResult] =
+      StopResult.eval(name)(())
   }
 
-  case class F2(name: String) extends F with Start {
+  case class F2(name: String) extends F with Start with Stop {
     override def toString = name
 
     def start: Eval[StartResult] =
       StartResult.eval(name)(())
+
+    def stop: Eval[StopResult] =
+      StopResult.eval(name)(())
   }
 
-  case class B(d: D, e: E, f: F) extends Start {
+  case class B(d: D, e: E, f: F) extends Start with Stop {
     def start: Eval[StartResult] =
       StartResult.eval("B")(())
+
+    def stop: Eval[StopResult] =
+      StopResult.eval("B")(())
   }
 
-  case class C(d: D, e: E, f: F) extends Start {
+  case class C(d: D, e: E, f: F) extends Start with Stop {
     def start: Eval[StartResult] =
       StartResult.eval("C")(())
+
+    def stop: Eval[StopResult] =
+      StopResult.eval("C")(())
   }
 
-  case class A(b: B, c: C) extends Start {
+  case class A(b: B, c: C) extends Start with Stop {
     def start: Eval[StartResult] =
       StartResult.eval("A")(())
+
+    def stop: Eval[StopResult] =
+      StopResult.eval("A")(())
   }
 
 }
