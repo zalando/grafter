@@ -14,7 +14,7 @@ lazy val commonSettings = Seq(
   organization         := "org.zalando",
   name                 := "grafter",
   scalaVersion         := "2.11.8",
-  version in ThisBuild := "1.1.1"
+  version in ThisBuild := "1.2.0"
 )
 
 lazy val testSettings = Seq(
