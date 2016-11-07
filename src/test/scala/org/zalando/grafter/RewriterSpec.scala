@@ -9,18 +9,22 @@ class RewriterSpec extends Specification { def is = s2"""
 
  An object graph can be rewritten with a node becoming a singleton object
    All identical nodes (having the same type) are replaced by just the first found instance $makeSingleton
-   An instance can be passed and be replaced everywhere                                     $replace
-   An instance of a subtype can be passed and be replaced everywhere                        $replaceWithSubtype
-   An instance of a subtype with an interface can be passed and be replaced everywhere      $replaceWithInterfaceSubtype
-   A replacement only works if we pass an instance of the same type                         $replaceWithDifferentType
-   
-   Startable components can be started in order from the bottom up                          $startInOrder
-   If a component fails to start the sequence is interrupted right away                     $stopFailedStart
-   If a component throws an exception on start the sequence is interrupted right away       $stopErrorStart
 
-   All stoppable components can be stopped in order from the top down                       $stopInOrder
-   If a component fails to start the sequence is interrupted right away                     $failedStop
-   If a component throws an exception on start the sequence is interrupted right away       $errorStop
+ An instance can be passed and be replaced everywhere                                     $replace
+ An instance of a subtype can be passed and be replaced everywhere                        $replaceWithSubtype
+ An instance of a subtype with an interface can be passed and be replaced everywhere      $replaceWithInterfaceSubtype
+ A replacement only works if we pass an instance of the same type                         $replaceWithDifferentType
+ A node can be modified by a function based on the node type                              $modifyNode
+ A node can be modified by a partial function based on the node type                      $modifyNodeWith
+
+
+ Startable components can be started in order from the bottom up                          $startInOrder
+ If a component fails to start the sequence is interrupted right away                     $stopFailedStart
+ If a component throws an exception on start the sequence is interrupted right away       $stopErrorStart
+
+ All stoppable components can be stopped in order from the top down                       $stopInOrder
+ If a component fails to start the sequence is interrupted right away                     $failedStop
+ If a component throws an exception on start the sequence is interrupted right away       $errorStop
 
 """
 
@@ -30,53 +34,61 @@ class RewriterSpec extends Specification { def is = s2"""
       C(D("d2"), E("e2"), F1("f2")))
 
   def makeSingleton = {
-
     val rewritten = graph.singleton[D]
 
     (rewritten.b.d must be(rewritten.c.d)) and
       (rewritten.b.d must_== D("d1"))
-
   }
 
   def replace = {
-
     val d = D("d3")
     val rewritten = graph.replace(d)
 
     (rewritten.b.d must be(rewritten.c.d)) and
       (rewritten.b.d must be(d))
-
   }
 
   def replaceWithSubtype = {
-
     val e: E = ESub("sub")
     val rewritten = graph.replace(e)
 
     (rewritten.b.e must be(rewritten.c.e)) and
       (rewritten.b.e must be(e))
-
   }
 
   def replaceWithInterfaceSubtype = {
-
     val f: F = F2("f2")
     val rewritten = graph.replace(f)
 
     (rewritten.b.f must be(rewritten.c.f)) and
       (rewritten.b.f must be(f))
-
   }
 
-  def  replaceWithDifferentType = {
-
+  def replaceWithDifferentType = {
     // here we keep the type as F2, not F!
     val f = F2("f2")
     val rewritten = graph.replace(f)
 
     (rewritten.b.f must not be rewritten.c.f) and
       (rewritten.b.f must not be f)
+  }
 
+  def modifyNode = {
+    val rewritten = graph.modify[F] { f: F =>
+      f match {
+        case F1(_) => F1(name = "new name")
+        case F2(_) => F2(name = "new name")
+      }
+    }
+    rewritten.b.f.name must_== "new name"
+  }
+
+  def modifyNodeWith = {
+    val rewritten = graph.modifyWith[F] {
+      case f: F1 => f.copy(name = "new name")
+      case f: F2 => f.copy(name = "new name")
+    }
+    rewritten.b.f.name must_== "new name"
   }
 
   def startInOrder =
@@ -178,7 +190,10 @@ object ExampleGraph {
       Eval.now(StopFailure(name))
   }
 
-  trait F
+  trait F {
+    def name: String
+  }
+
   case class F1(name: String) extends F with Start with Stop {
     override def toString = name
 

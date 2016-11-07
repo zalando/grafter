@@ -42,6 +42,22 @@ trait Rewriter {
   def replaceWith[G, T](s: T ==> Option[T], graph: G): G =
     replaceWithStrategy(strategy(s), graph)
 
+  /**
+    * Modify with a given function
+    */
+  def modify[G, T : ClassTag](f: T => T, graph: G): G =
+    replaceWithStrategy(strategy[T] {
+      case t if Reflect.implements(t) => Some(f(t))
+    }, graph)
+
+  /**
+   * Modify with a given Partial function
+   */
+  def modifyWith[G, T : ClassTag](f: T ==> T, graph: G): G =
+    replaceWithStrategy(strategy[T] {
+      case t if Reflect.implements(t) => Some(f.applyOrElse(t, (t1: T) => t1))
+    }, graph)
+
   def singletonStrategy[S](implicit tag: ClassTag[S]): Strategy = {
     var s: Option[S] = None
     strategy[Any] {
@@ -147,6 +163,12 @@ trait RewriterSyntax {
 
     def replaceWith[T](s: T ==> Option[T]): G =
       Rewriter.replaceWith(s, graph)
+
+    def modify[T : ClassTag](f: T => T): G =
+      Rewriter.modify(f, graph)
+
+    def modifyWith[T : ClassTag](f: T ==> T): G =
+      Rewriter.modifyWith(f, graph)
 
     def start: Eval[List[StartResult]] =
       Rewriter.start(graph)
