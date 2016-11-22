@@ -15,9 +15,16 @@ case class StartFailure(message: String)                     extends StartResult
 case class StartError(message: String, exception: Throwable) extends StartResult { def success = false }
 
 object StartResult {
+
   def eval[A](message: String)(a: =>A): Eval[StartResult] =
     Eval.later {
       try { a; StartOk(message) }
+      catch { case t: Throwable => StartError(message, t) }
+    }
+
+  def attempt[A](message: String)(a: =>Either[Throwable, A]): Eval[StartResult] =
+    Eval.later {
+      try { a.fold(t => StartError(message, t), _ => StartOk(message)) }
       catch { case t: Throwable => StartError(message, t) }
     }
 }
