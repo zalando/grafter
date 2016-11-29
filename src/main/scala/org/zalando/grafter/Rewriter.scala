@@ -83,7 +83,7 @@ trait Rewriter {
   /** start components from the bottom up */
   def start[G](graph: G): Eval[List[StartResult]] = Eval.later {
     // this map is there to make sure we don't start a node twice
-    // this relies on the assumption that different components have different hashcodes
+    // this is useful when there are singletons
     var started: Vector[Int] = Vector.empty
 
     // this stores the results
@@ -93,7 +93,7 @@ trait Rewriter {
     val startStrategy =
       everywherebu(strategy[Any] {
         case s: Start =>
-          if (startError || started.contains(s.hashCode)) Option(s)
+          if (startError || started.contains(System.identityHashCode(s))) Option(s)
           else {
             val result = s.start.value
             results.append(result)
@@ -118,7 +118,7 @@ trait Rewriter {
    */
   def stop[G](graph: G): Eval[List[StopResult]] = Eval.later {
     // this map is there to make sure we don't stop a node twice
-    // this relies on the assumption that different components have different hashcodes
+    // this is useful when there are singletons
     var stopped: Vector[Int] = Vector.empty
 
     // this stores the results
@@ -127,7 +127,7 @@ trait Rewriter {
     val stopStrategy =
       everywheretd(strategy[Any] {
         case s: Stop =>
-          if (stopped.contains(s.hashCode)) Option(s)
+          if (stopped.contains(System.identityHashCode(s))) Option(s)
           else {
             val result = s.stop.value
             results.append(result)
