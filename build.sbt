@@ -47,6 +47,7 @@ lazy val compilationSettings = Seq(
 
 lazy val publishSettings = Seq(
   publishTo := Option("zalando-releases" at "https://maven.zalando.net/content/repositories/releases"),
+  licenses += ("MIT", url("http://opensource.org/licenses/MIT")),
   publishMavenStyle := true
 ) ++
   promulgateVersionSettings
