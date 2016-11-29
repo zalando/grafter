@@ -19,10 +19,12 @@ class RewriterSpec extends Specification { def is = s2"""
 
 
  Startable components can be started in order from the bottom up                          $startInOrder
+   a singleton will start only once                                                       $startInOrderWithSingleton
  If a component fails to start the sequence is interrupted right away                     $stopFailedStart
  If a component throws an exception on start the sequence is interrupted right away       $stopErrorStart
 
  All stoppable components can be stopped in order from the top down                       $stopInOrder
+   a singleton will stop only once                                                        $stopInOrderWithSingleton
  If a component fails to start the sequence is interrupted right away                     $failedStop
  If a component throws an exception on start the sequence is interrupted right away       $errorStop
 
@@ -98,6 +100,13 @@ class RewriterSpec extends Specification { def is = s2"""
       StartOk("A")
     )
 
+  def startInOrderWithSingleton =
+    Rewriter.start(graph.singleton[E]).value ==== List(
+      StartOk("d1"), StartOk("e1"), StartOk("f1"), StartOk("B"),
+      StartOk("d2"), StartOk("f2"), StartOk("C"),
+      StartOk("A")
+    )
+
   def stopFailedStart = {
     val failedGraph = A(
       B(D("d1"), ESub("e1"), F1("f1")),
@@ -127,6 +136,14 @@ class RewriterSpec extends Specification { def is = s2"""
       StopOk("B"), StopOk("d1"), StopOk("e1"), StopOk("f1"),
       StopOk("C"), StopOk("d2"), StopOk("e2"), StopOk("f2")
     )
+
+  def stopInOrderWithSingleton =
+    Rewriter.stop(graph.singleton[E]).value ==== List(
+      StopOk("A"),
+      StopOk("B"), StopOk("d1"), StopOk("e1"), StopOk("f1"),
+      StopOk("C"), StopOk("d2"), StopOk("f2")
+    )
+
 
   def failedStop = {
     val failedGraph = A(
