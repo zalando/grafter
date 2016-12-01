@@ -14,7 +14,7 @@ lazy val commonSettings = Seq(
   organization         := "org.zalando",
   name                 := "grafter",
   scalaVersion         := "2.11.8",
-  version in ThisBuild := "1.2.3"
+  version in ThisBuild := "1.2.4"
 )
 
 lazy val testSettings = Seq(
@@ -46,8 +46,30 @@ lazy val compilationSettings = Seq(
 )
 
 lazy val publishSettings = Seq(
-  publishTo := Option("zalando-releases" at "https://maven.zalando.net/content/repositories/releases"),
-  licenses += ("MIT", url("http://opensource.org/licenses/MIT")),
-  publishMavenStyle := true
+  publishTo := Option("releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2"),
+  homepage := Some(url("https://github.com/zalando/grafter")),
+  licenses := Seq("MIT" -> url("http://opensource.org/licenses/MIT")),
+  scmInfo := Some(ScmInfo(url("https://github.com/zalando/grafter"), "scm:git:git@github.com:zalando/grafter.git")),
+  autoAPIMappings := true,
+  pomExtra := (
+    <developers>
+      <developer>
+        <id>etorreborre</id>
+        <name>Eric Torreborre</name>
+        <url>https://github.com/etorreborre/</url>
+      </developer>
+    </developers>
+    ),
+  publishMavenStyle := true,
+  publishArtifact in Test := false
 ) ++
+  credentialSettings ++
   promulgateVersionSettings
+
+lazy val credentialSettings = Seq(
+  // For Travis CI - see http://www.cakesolutions.net/teamblogs/publishing-artefacts-to-oss-sonatype-nexus-using-sbt-and-travis-ci
+  credentials ++= (for {
+    username <- Option(System.getenv().get("SONATYPE_USERNAME"))
+    password <- Option(System.getenv().get("SONATYPE_PASSWORD"))
+  } yield Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", username, password)).toSeq
+)

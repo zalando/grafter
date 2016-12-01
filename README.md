@@ -2,24 +2,46 @@
 
 ![grafting](https://autonomyacres.files.wordpress.com/2015/04/crown-cleft-grafting-fruit-trees.jpg?w=300&h=284)
 
-This project is a library used to configure, wire and start Scala applications.
+# What's wrong with constructor injection again?
 
-It is based on a few simple ideas:
+There are [many](https://github.com/adamw/macwire) [libraries](https://github.com/google/guice) or [approaches](http://www.cakesolutions.net/teamblogs/2011/12/19/cake-pattern-in-depth) for doing [dependency injection](https://en.wikipedia.org/wiki/Dependency_injection) in Scala.
+Grafter goes back to the fundamentals of dependency injection by *just using constructor injection*: no reflection, no xml, no annotations, no inheritance or self-types.
+ 
+Then, Grafter add to constructor injection just the necessary support to:
 
- 1. The configuration is entirely encoded as case classes
- 2. Components are also case classes and may implement interfaces
- 3. Components can depend on other components by having them as case class
- members
- 4. Each component can be instantiated from the application configuration
- 5. So it is possible to recursively build the full application as a
+ - instantiate a component-based application from a configuration
+ - fine-tune the wiring (create singletons)
+ - test the application by replacing components
+ - start / stop the application
+
+Grafter is targeting every possible application because it focuses on associating just 3 ideas:
+
+ - case classes and interfaces for components
+ - `Reader` instances and [shapeless](http://github.com/milessabin/shapeless) for the configuration
+ - [tree rewriting](http://www.program-transformation.org/Transform/TreeRewriting) and [kiama](https://bitbucket.org/inkytonik/kiama) for everything else!
+
+Please try it and report your experience:
+
+ - how is it better / worse than another library?
+ - is the core model more approachable than other libraries?
+ - what could be improved?
+
+# Grafter components
+
+Grafter components are very simple: they are just case classes (possibly) implementing interfaces.
+
+ 1. components can depend on other components by having them as case class members
+ 2. the application is the top-level component
+ 3. the application configuration is a just a case class (can be read from a file if necessary)
+ 4. each component can be instantiated from the application configuration
+ 5. so it is possible to recursively build the full application as a
  *tree* of components from the application configuration
- 6. Singletons can be made by rewriting the tree, effectively making it a
- graph
- 7. The application can be started bottom-up by starting the components
+ 6. singletons can be made by rewriting the tree, effectively making it a graph
+ 7. the application can be started bottom-up by starting the components
  extending the `Start` markup trait
- 8. The application can also be stopped top-down by stopping all the components
+ 8. the application can also be stopped top-down by stopping all the components
  extending the `Stop` markup trait
- 8. Mocking the application for testing can also be done by rewriting the
+ 8. mocking the application for testing can also be done by rewriting the
  tree
 
 Let's see this on a concrete example.
@@ -247,17 +269,16 @@ package object config extends GenericReader {
 You add this library as a sbt dependency:
 ```scala
 libraryDependencies += "org.zalando" %% "grafter" % "1.0.0"
-
-resolvers ++= Seq(
-  "Zalando" at "https://maven.zalando.net/content/repositories/releases/"
-)
 ```
 
 ## Contributing
 
+Please read our [contributor guidelines](CONTRIBUTING.md) for more details. 
+And please check these [open issues](http://github.com/zalando/grafter/issues) for specific tasks.
+
 ----
 
-You can contribute to this project by opening a PR. Don't forget to add tests to your PR!
+## License
 
 The MIT License (MIT) Copyright © [2016] Zalando SE, https://tech.zalando.com
 
