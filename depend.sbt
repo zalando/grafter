@@ -3,7 +3,12 @@ lazy val kiamaVersion      = "2.0.0"
 lazy val specs2Version     = "3.8.5"
 lazy val shapelessVersion  = "2.3.2"
 
-libraryDependencies ++= cats ++ kiama ++ shapeless ++ specs2
+libraryDependencies in Global ++=
+  cats      ++
+  kiama     ++
+  shapeless ++
+  reflect   ++
+  specs2
 
 lazy val kiama =
   Seq("org.bitbucket.inkytonik.kiama" %% "kiama" % kiamaVersion)
@@ -22,3 +27,6 @@ lazy val specs2 = Seq(
 
 lazy val shapeless =
   Seq("com.chuusai" %% "shapeless" % shapelessVersion)
+
+lazy val reflect = Seq(
+  "org.scala-lang" % "scala-reflect" % "2.11.8")

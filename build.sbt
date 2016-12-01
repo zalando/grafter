@@ -4,17 +4,38 @@ import com.ambiata._
 
 lazy val grafter = (project in file(".")).
   settings(
-    commonSettings      ++
+    rootSettings ++
     compilationSettings ++
-    testSettings        ++
+    commonSettings      ++
     publishSettings
+  ).aggregate(core, macros).dependsOn(core, macros)
+
+lazy val core = (project in file("core")).
+  settings(
+    compilationSettings ++
+    testSettings ++
+    Seq(publishArtifact := false)
   )
+
+lazy val macros = project.in(file("macros")).
+  settings(
+    compilationSettings ++
+    Seq(publishArtifact := false)
+  )
+
+lazy val rootSettings = Seq(
+  sources in Compile  := sources.all(aggregateCompile).value.flatten,
+  libraryDependencies := libraryDependencies.all(aggregateCompile).value.flatten
+)
+
+lazy val aggregateCompile = ScopeFilter(
+  inProjects(core, macros),
+  inConfigurations(Compile))
 
 lazy val commonSettings = Seq(
   organization         := "org.zalando",
   name                 := "grafter",
-  scalaVersion         := "2.11.8",
-  version in ThisBuild := "1.2.4"
+  version in ThisBuild := "1.2.5"
 )
 
 lazy val testSettings = Seq(
@@ -26,7 +47,9 @@ lazy val testSettings = Seq(
 )
 
 lazy val compilationSettings = Seq(
+  scalaVersion := "2.11.8",
   ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) },
+  addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
   scalacOptions ++= Seq(
     "-unchecked",
     "-feature",
@@ -46,7 +69,10 @@ lazy val compilationSettings = Seq(
 )
 
 lazy val publishSettings = Seq(
+// jars are temporarily published internally until the sonatype access works
+//  publishTo := Option("zalando-releases" at "https://maven.zalando.net/content/repositories/releases"),
   publishTo := Option("releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2"),
+  publishMavenStyle := true,
   homepage := Some(url("https://github.com/zalando/grafter")),
   licenses := Seq("MIT" -> url("http://opensource.org/licenses/MIT")),
   scmInfo := Some(ScmInfo(url("https://github.com/zalando/grafter"), "scm:git:git@github.com:zalando/grafter.git")),
@@ -59,8 +85,7 @@ lazy val publishSettings = Seq(
         <url>https://github.com/etorreborre/</url>
       </developer>
     </developers>
-    ),
-  publishMavenStyle := true,
+  ),
   publishArtifact in Test := false
 ) ++
   credentialSettings ++

@@ -35,7 +35,6 @@ class GenericReaderSpec extends Specification { def is = s2"""
   }
 
   // Helpers
-
   case class AppConfig(allowed: List[String], httpConf: HttpServerConfig, dbUri: String)
 
   case class HttpServerConfig(host: String, port: Int)
