@@ -8,7 +8,7 @@ lazy val grafter = (project in file(".")).
     compilationSettings ++
     commonSettings      ++
     publishSettings
-  ).aggregate(core, macros).dependsOn(core, macros)
+  ).aggregate(core, macros)
 
 lazy val core = (project in file("core")).
   settings(
@@ -35,7 +35,7 @@ lazy val aggregateCompile = ScopeFilter(
 lazy val commonSettings = Seq(
   organization         := "org.zalando",
   name                 := "grafter",
-  version in ThisBuild := "1.2.5"
+  version in ThisBuild := "1.2.6"
 )
 
 lazy val testSettings = Seq(
@@ -69,8 +69,6 @@ lazy val compilationSettings = Seq(
 )
 
 lazy val publishSettings = Seq(
-// jars are temporarily published internally until the sonatype access works
-//  publishTo := Option("zalando-releases" at "https://maven.zalando.net/content/repositories/releases"),
   publishTo := Option("releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2"),
   publishMavenStyle := true,
   homepage := Some(url("https://github.com/zalando/grafter")),
