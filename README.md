@@ -78,7 +78,7 @@ import cats.implicits._
 
 object HttpServer {
   // we can "map" on a Reader!
-  implicit def reader: Reader[ApplicationConfig] =
+  implicit def reader: Reader[ApplicationConfig, HttpServer] =
     HttpConfig.reader.map(HttpServer.apply)
 
 }
