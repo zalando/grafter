@@ -1,5 +1,5 @@
 # Grafter
-
+[![Build Status](https://travis-ci.org/zalando/grafter.svg?branch=master)](https://travis-ci.org/zalando/grafter)
 ![grafting](https://autonomyacres.files.wordpress.com/2015/04/crown-cleft-grafting-fruit-trees.jpg?w=300&h=284)
 
 # What's wrong with constructor injection again?
@@ -132,7 +132,7 @@ object PostgresDatabase {
 }
 
 object DbConfig {
-  implicit def reader: Reader[ApplicationConfig, dbConfig] =
+  implicit def reader: Reader[ApplicationConfig, DbConfig] =
     Reader(_.db)
 }
 
@@ -143,6 +143,20 @@ will create an `Application` instance `Database.reader` will be used and
 will provide a `Postgres` implementation by default. This means that
 there must *always* be a default implementation for each interface introduced
 in the system. But don't worry we can always change it later!
+
+#### Remove some boilerplate
+
+Ultimately configuration components like `DbConfig` above are extracted from `ApplicationConfig`.
+It is possible to generate `Reader` instances for those values automatically with the `@readers` annotation:
+```scala
+import org.zalando.grafter.macros._
+
+@readers
+case class ApplicationConfig(
+  db: DbConfig,
+  http: HttpConfig
+)
+```
 
 ### Create the full application
 
