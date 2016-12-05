@@ -1,6 +1,6 @@
-lazy val catsVersion       = "0.8.0"
+lazy val catsVersion       = "0.8.1"
 lazy val kiamaVersion      = "2.0.0"
-lazy val specs2Version     = "3.8.5"
+lazy val specs2Version     = "3.8.6"
 lazy val shapelessVersion  = "2.3.2"
 
 libraryDependencies in Global ++=
@@ -21,7 +21,6 @@ lazy val cats = Seq(
 lazy val specs2 = Seq(
   "org.specs2" %% "specs2-core",
   "org.specs2" %% "specs2-scalacheck",
-  "org.specs2" %% "specs2-cats",
   "org.specs2" %% "specs2-junit"
 ).map(_ % specs2Version % "test")
 
