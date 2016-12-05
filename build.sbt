@@ -47,7 +47,8 @@ lazy val testSettings = Seq(
 )
 
 lazy val compilationSettings = Seq(
-  scalaVersion := "2.11.8",
+  scalaVersion := "2.12.0",
+  crossScalaVersions := Seq("2.11.8", "2.12.0"),
   ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) },
   addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
   scalacOptions ++= Seq(
