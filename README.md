@@ -1,5 +1,5 @@
 # Grafter
-
+[![Build Status](https://travis-ci.org/zalando/grafter.svg?branch=master)](https://travis-ci.org/zalando/grafter)
 ![grafting](https://autonomyacres.files.wordpress.com/2015/04/crown-cleft-grafting-fruit-trees.jpg?w=300&h=284)
 
 # What's wrong with constructor injection again?
