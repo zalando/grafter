@@ -282,7 +282,7 @@ package object config extends GenericReader {
 
 You add this library as a sbt dependency:
 ```scala
-libraryDependencies += "org.zalando" %% "grafter" % "1.0.0"
+libraryDependencies += "org.zalando" %% "grafter" % "1.2.6"
 ```
 
 ## Contributing
