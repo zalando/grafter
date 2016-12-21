@@ -3,7 +3,7 @@ package org.zalando.grafter.macros
 import scala.annotation.StaticAnnotation
 import scala.language.experimental.macros
 
-object ReaderMacro {
+object ReadersMacro {
 
   def impl(c: scala.reflect.macros.whitebox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
@@ -60,5 +60,5 @@ object ReaderMacro {
 }
 
 class readers extends StaticAnnotation {
-  def macroTransform(annottees: Any*): Any = macro ReaderMacro.impl
+  def macroTransform(annottees: Any*): Any = macro ReadersMacro.impl
 }

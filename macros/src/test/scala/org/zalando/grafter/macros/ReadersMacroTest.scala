@@ -1,6 +1,6 @@
 package org.zalando.grafter.macros
 
-object ReaderMacroTest {
+object ReadersMacroTest {
   val r1: cats.data.Reader[AppConfig, C1] =
     AppConfig.c1Reader
 
