@@ -2,11 +2,23 @@ package org.zalando.grafter.macros
 
 import scala.annotation.StaticAnnotation
 import scala.language.experimental.macros
+import scala.reflect.macros.whitebox
 
 object ReaderMacro {
 
-  def impl(c: scala.reflect.macros.whitebox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+  def impl(c: whitebox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
+
+    object TypeParamTraverser extends Traverser {
+      var types: List[c.universe.TypeName] = List[TypeName]()
+      override def traverse(tree: Tree): Unit = tree match {
+        case New(AppliedTypeTree(Ident(TypeName("reader")), typeIds)) =>
+          types = typeIds.collect {
+            case Ident(typeName: TypeName) => typeName
+          }
+        case _ => super.traverse(tree)
+      }
+    }
 
     val inputs : (Tree, Tree, Option[Tree]) =
       annottees.toList match {
@@ -19,39 +31,38 @@ object ReaderMacro {
         case Nil => c.abort(c.enclosingPosition, "no target")
       }
 
-    val outputs: List[Tree] = inputs match {
+    val outputs: List[Tree] = {
+      val (original, ClassDef(_, className, _, _), companion) = inputs
 
-      case (original, ClassDef(_, className, _, Template(_, _, fields)), companion) =>
-        def readerInstances =
-          fields.
-            collect { case field @ ValDef(_, fieldName, fieldType, _) => (fieldName, fieldType) }.
-            groupBy(_._2.tpe.typeSymbol.name.decodedName.toString).values.map(_.head).toList.
-            map { case (fieldName, fieldType) =>
-              val readerName = TermName(fieldName.toString.trim+"Reader")
-              val fieldAccessor = TermName(fieldName.toString.trim)
+      val genericReader = {
+        TypeParamTraverser.traverse(c.macroApplication)
+        TypeParamTraverser.types
+          .headOption
+          .map { a =>
+            c.Expr[Any](
+              q"""
+               import org.zalando.grafter.GenericReader._
+               implicit def reader: cats.data.Reader[$a, $className] = genericReader""")
+          }
+          .getOrElse {
+            c.abort(c.enclosingPosition, "The @reader annotation requires a type parameter")
+          }
+      }
 
-              c.Expr[Any](
-            q"""
-                implicit def $readerName: cats.data.Reader[$className, $fieldType] =
-                  cats.data.Reader(_.$fieldAccessor)""")
-            }
-
-        val companionObject =
-        companion match {
-          case Some(q"""object $companionName { ..$body }""") =>
-            q"""object $companionName {
+      val companionObject = companion match {
+        case Some(q"""object $companionName { ..$body }""") =>
+          q"""object $companionName {
            ..$body
-           ..$readerInstances
+           ..$genericReader
            }"""
 
-          case None =>
-            q"""object ${TermName(className.decodedName.toString)} {
-           ..$readerInstances
+        case None =>
+          q"""object ${TermName(className.decodedName.toString)} {
+           ..$genericReader
            }"""
-        }
-        original :: companionObject :: Nil
+      }
 
-      case other => c.abort(c.enclosingPosition, "The @readers annotation can only annotate a simple case class with no extension or type parameters")
+      original :: companionObject :: Nil
     }
 
     c.Expr[Any](Block(outputs, Literal(Constant(()))))
@@ -59,6 +70,6 @@ object ReaderMacro {
 
 }
 
-class readers extends StaticAnnotation {
+class reader[A] extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro ReaderMacro.impl
 }

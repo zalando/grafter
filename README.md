@@ -160,6 +160,17 @@ case class ApplicationConfig(
 )
 ```
 
+Another common element is the `implicit def reader` that returns `genericReader`. It is possible to replace the companion object containing this function with a `@reader[A]` annotation on the case class:
+
+```scala
+@reader[ApplicationConfig]
+case class PostgresDatabase(dbConfig: DbConfig) extends Start {
+  def start: Eval[StartResult] =
+    Start.eval("postgres")(PostgresDriver.start(dbConfig.url))
+}
+// no need for the companion object
+```
+
 ### Create the full application
 
 First you need a full `ApplicationConfig`
@@ -284,7 +295,7 @@ package object config extends GenericReader {
 
 You add this library as a sbt dependency:
 ```scala
-libraryDependencies += "org.zalando" %% "grafter" % "1.2.6"
+libraryDependencies += "org.zalando" %% "grafter" % "1.3.0"
 ```
 
 ## Contributing

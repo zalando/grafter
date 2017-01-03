@@ -21,7 +21,7 @@ lazy val macros = project.in(file("macros")).
   settings(
     compilationSettings ++
     Seq(publishArtifact := false)
-  )
+  ).dependsOn(core)
 
 lazy val rootSettings = Seq(
   sources in Compile  := sources.all(aggregateCompile).value.flatten,
@@ -35,7 +35,7 @@ lazy val aggregateCompile = ScopeFilter(
 lazy val commonSettings = Seq(
   organization         := "org.zalando",
   name                 := "grafter",
-  version in ThisBuild := "1.2.6"
+  version in ThisBuild := "1.3.0"
 )
 
 lazy val testSettings = Seq(
