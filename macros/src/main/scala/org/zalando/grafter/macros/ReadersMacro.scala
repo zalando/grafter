@@ -38,8 +38,8 @@ object ReadersMacro {
 
         val companionObject =
         companion match {
-          case Some(q"""object $companionName { ..$body }""") =>
-            q"""object $companionName {
+          case Some(q"""$mod object $companionName extends { ..$earlydefns } with ..$parents { ..$body }""") =>
+            q"""$mod object $companionName extends { ..$earlydefns } with ..$parents {
            ..$body
            ..$readerInstances
            }"""
