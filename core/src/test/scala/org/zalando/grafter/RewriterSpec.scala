@@ -3,9 +3,10 @@ package org.zalando.grafter
 import org.specs2._
 import cats.Eval
 import ExampleGraph._
+import org.specs2.matcher.ThrownExpectations
 import syntax.rewriter._
 
-class RewriterSpec extends Specification { def is = s2"""
+class RewriterSpec extends Specification with ThrownExpectations { def is = s2"""
 
  An object graph can be rewritten with a node becoming a singleton object
    All identical nodes (having the same type) are replaced by just the first found instance $makeSingleton
@@ -27,6 +28,8 @@ class RewriterSpec extends Specification { def is = s2"""
    a singleton will stop only once                                                        $stopInOrderWithSingleton
  If a component fails to start the sequence is interrupted right away                     $failedStop
  If a component throws an exception on start the sequence is interrupted right away       $errorStop
+
+ The order in which singletons are applied should not matter $singletonOrder
 
 """
 
@@ -172,6 +175,25 @@ class RewriterSpec extends Specification { def is = s2"""
     )
   }
 
+  def singletonOrder = {
+    val graph = T(U("u1"), V("v1", U("u2")), V("v2", U("u3")))
+    val g1 = graph.singleton[U].singleton[V]
+    val g2 = graph.singleton[V].singleton[U]
+
+    "g1 has singletons" ==> {
+      g1.v1 === g1.v2
+      g1.u  === g1.v1.u
+      g1.u  === g1.v2.u
+    }
+
+    "g2 has singletons" ==> {
+      g2.v1 === g2.v2
+      g2.u  === g2.v1.u
+      g2.u  === g2.v2.u
+    }
+
+  }
+
 }
 
 object ExampleGraph {
@@ -253,6 +275,19 @@ object ExampleGraph {
 
     def stop: Eval[StopResult] =
       StopResult.eval("A")(())
+  }
+
+  // classes to test singletons
+  case class U(name: String) {
+    override def toString = s"${getClass.getSimpleName}($name: ${System.identityHashCode(this)})"
+    override def equals(a: Any) = System.identityHashCode(this) == System.identityHashCode(a)
+  }
+  case class V(name: String, u: U) {
+    override def toString = s"${getClass.getSimpleName}($name: ${System.identityHashCode(this)}, $u)"
+    override def equals(a: Any) = System.identityHashCode(this) == System.identityHashCode(a)
+  }
+  case class T(u: U, v1: V, v2: V){
+    override def toString = s"${getClass.getSimpleName}(${System.identityHashCode(this)}, $u, $v1, $v2)"
   }
 
 }
