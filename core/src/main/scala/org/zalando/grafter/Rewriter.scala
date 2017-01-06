@@ -1,7 +1,7 @@
 package org.zalando.grafter
 
 import cats.Eval
-import org.bitbucket.inkytonik.kiama.rewriting.Rewriter._
+import org.bitbucket.inkytonik.kiama.rewriting.MemoRewriter._
 import org.bitbucket.inkytonik.kiama.rewriting.Strategy
 
 import scala.collection.mutable.ListBuffer
