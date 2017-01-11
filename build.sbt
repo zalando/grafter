@@ -24,6 +24,7 @@ lazy val macros = project.in(file("macros")).
   ).dependsOn(core)
 
 lazy val rootSettings = Seq(
+  unmanagedSourceDirectories in Compile := unmanagedSourceDirectories.all(aggregateCompile).value.flatten,
   sources in Compile  := sources.all(aggregateCompile).value.flatten,
   libraryDependencies := libraryDependencies.all(aggregateCompile).value.flatten
 )
