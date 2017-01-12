@@ -123,9 +123,11 @@ object Database {
     PostgresDatabase.reader
 }
 
-case class PostgresDatabase(dbConfig: DbConfig) extends Start {
+case class PostgresDatabase(dbConfig: DbConfig) extends Start with Database {
   def start: Eval[StartResult] =
-    Start.eval("postgres")(PostgresDriver.start(dbConfig.url))
+    StartResult.eval("postgres") {
+      // use dbConfig.url to initialize
+    }
 }
 
 object PostgresDatabase {
@@ -149,6 +151,12 @@ in the system. But don't worry we can always change it later!
 #### Remove some boilerplate
 
 Ultimately configuration components like `DbConfig` above are extracted from `ApplicationConfig`.
+
+First, add macro-paradise plugin to your project
+```scala
+addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+```
+
 It is possible to generate `Reader` instances for those values automatically with the `@readers` annotation:
 ```scala
 import org.zalando.grafter.macros._
