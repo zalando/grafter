@@ -33,7 +33,7 @@ class GenericReaderSpec extends Specification { def is = s2"""
 
     haveServer and haveDb
   }
-
+  
   // Helpers
   case class AppConfig(allowed: List[String], httpConf: HttpServerConfig, dbUri: String)
 
