@@ -4,7 +4,7 @@ import scala.annotation.StaticAnnotation
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox
 
-object ClientReaderMacro {
+object DependentReaderMacro {
 
   def impl(c: whitebox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
@@ -39,7 +39,7 @@ object ClientReaderMacro {
         q"""
          import org.zalando.grafter.GenericReader._
          import cats.data.Reader
-         implicit def clientReader[$A](implicit ..$params): Reader[$A, $className] = genericReader""")
+         implicit def dependentReader[$A](implicit ..$params): Reader[$A, $className] = genericReader""")
 
       val companionObject = companion match {
         case Some(q"""$mod object $companionName extends { ..$earlydefns } with ..$parents { ..$body }""") =>
@@ -62,6 +62,6 @@ object ClientReaderMacro {
 
 }
 
-class clientReader extends StaticAnnotation {
-  def macroTransform(annottees: Any*): Any = macro ClientReaderMacro.impl
+class dependentReader extends StaticAnnotation {
+  def macroTransform(annottees: Any*): Any = macro DependentReaderMacro.impl
 }
