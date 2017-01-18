@@ -148,6 +148,30 @@ will provide a `Postgres` implementation by default. This means that
 there must *always* be a default implementation for each interface introduced
 in the system. But don't worry we can always change it later!
 
+#### Remove dependency on global config
+
+You may be wonder why a `HttpServer` statically depends on the `ApplicationConfig` here:
+
+```scala
+object HttpServer {
+  implicit def reader: Reader[ApplicationConfig, HttpServer] =
+    genericReader
+}
+```
+
+To avoid this dependency lets parametrize the `reader` with some config of type `A`:
+
+```scala
+object HttpServer {
+  implicit def dependentReader[A](implicit 
+    httpConfigReader: Reader[A, HttpConfig]
+  ): Reader[A, HttpServer] = genericReader
+}
+```
+
+This allows us to put the `HttpServer` into a reusable module and build it independently from the `ApplicationConfig`. 
+Next, implicitly provide a `Reader[ApplicationConfing, HttConfig]` and you may create the `HttpServer`.
+
 #### Remove some boilerplate
 
 Ultimately configuration components like `DbConfig` above are extracted from `ApplicationConfig`.
@@ -177,6 +201,13 @@ case class PostgresDatabase(dbConfig: DbConfig) extends Start {
     Start.eval("postgres")(PostgresDriver.start(dbConfig.url))
 }
 // no need for the companion object
+```
+
+To create dependent reader use `@dependentReader` annotation: 
+
+```scala
+@dependentReader
+case class PostgresDatabase(dbConfig: DbConfig)
 ```
 
 ### Create the full application
