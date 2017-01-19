@@ -238,7 +238,7 @@ import org.zalando.grafter.Rewriter
 // can also be written application.singleton[Database]
 // by importing Rewriter._
 val app: Application =
-  Rewriter.singleton[Database](application)
+  Rewriter.singleton[Database, Application](application)
 ```
 
 ### Start the application
