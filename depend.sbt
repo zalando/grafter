@@ -7,7 +7,6 @@ libraryDependencies in Global ++=
   cats      ++
   kiama     ++
   shapeless ++
-  reflect   ++
   specs2
 
 lazy val kiama =
@@ -27,5 +26,3 @@ lazy val specs2 = Seq(
 lazy val shapeless =
   Seq("com.chuusai" %% "shapeless" % shapelessVersion)
 
-lazy val reflect = Seq(
-  "org.scala-lang" % "scala-reflect" % "2.11.8")
