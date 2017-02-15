@@ -326,16 +326,23 @@ val httpConfigs: List[HttpConfig] =
 In order for the `GenericReader` functionality to work you need to
 import it where you want `Reader` instances to be generated.
 
-You can also create a package object for your project, mix-in the
-`GenericReader` trait and add a few convenience aliases for your project:
-
+You can:
+ 
+  - create a package object for your project to contain a few convenience aliases for your specific configuration type
+  
+  - have your application configuration object (say `ApplicationConfig`) extend the `GenericReader` trait to import the generic implicits into
+  its implicit scope so that they are found whenever a component `X` tries to build a `Reader[ApplicationConfig, X]`
+  
+  - use the `@readers` annotation to your `ApplicationConfig` to generate the necessary readers for finding sub-configuration values,
+  for example `Reader[ApplicationConfig, HttpConfig]`
+  
 ```scala
 package com.acme
 
 import org.zalando.grafter
 import shapeless._
 
-package object config extends GenericReader {
+package object config {
 
   type ConfigReader[A] = Reader[ApplicationConfig, A]
 
@@ -346,6 +353,10 @@ package object config extends GenericReader {
     r(c)
 
 }
+
+@readers
+object ApplicationConfig extends GenericReader
+
 ```
 
 ## Installation
