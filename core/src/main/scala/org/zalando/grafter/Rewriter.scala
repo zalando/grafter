@@ -6,6 +6,7 @@ import org.bitbucket.inkytonik.kiama.rewriting.Strategy
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
+import Reflect._
 
 /**
   * Functions for rewriting parts of an object graph representing services or configuration
@@ -46,7 +47,7 @@ trait Rewriter {
     */
   def modify[G, T : ClassTag](f: T => T, graph: G): G =
     replaceWithStrategy(strategy[T] {
-      case t if Reflect.implements(t) => Some(f(t))
+      case t if t.implements[T] => Some(f(t))
     }, graph)
 
   /**
@@ -54,7 +55,7 @@ trait Rewriter {
    */
   def modifyWith[G, T : ClassTag](f: PartialFunction[T, T], graph: G): G =
     replaceWithStrategy(strategy[T] {
-      case t if Reflect.implements(t) => Some(f.applyOrElse(t, (t1: T) => t1))
+      case t if t.implements[T] => Some(f.applyOrElse(t, (t1: T) => t1))
     }, graph)
 
   def singletonStrategy[S](implicit tag: ClassTag[S]): Strategy = {
@@ -74,7 +75,7 @@ trait Rewriter {
 
   def replaceStrategy[S : ClassTag](s: S): Strategy =
     strategy[Any] {
-      case v if Reflect.implements(v) =>
+      case v if v.implements[S] =>
         Some(s)
       case other =>
         None
