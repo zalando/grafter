@@ -97,7 +97,7 @@ trait Rewriter {
           else {
             val result = s.start.value
             results.append(result)
-            started = started :+ s.hashCode
+            started = started :+ System.identityHashCode(s)
 
             result match {
               case r: StartOk => ()
@@ -131,7 +131,7 @@ trait Rewriter {
           else {
             val result = s.stop.value
             results.append(result)
-            stopped = stopped :+ s.hashCode
+            stopped = stopped :+ System.identityHashCode(s)
             Option(s)
           }
       })
@@ -179,15 +179,3 @@ trait RewriterSyntax {
 
 object RewriterSyntax extends RewriterSyntax
 
-object Reflect {
-
-  /**
-    * @return true if A implements the list of types defined by a given class tag
-    */
-  def implements(a: Any)(implicit ct: ClassTag[_]): Boolean = {
-    val types: List[Class[_]] =
-      ct.runtimeClass +: ct.runtimeClass.getInterfaces.toList
-
-    types.forall(t => t.isAssignableFrom(a.getClass))
-  }
-}
