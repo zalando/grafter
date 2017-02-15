@@ -4,6 +4,7 @@ import org.bitbucket.inkytonik.kiama.rewriting.MemoRewriter._
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
+import Reflect._
 
 trait Query {
   
@@ -16,10 +17,10 @@ trait Query {
 
     val collectStrategy =
       everywheretd(strategy[Any] {
-        case t: T if Reflect.implements(t) =>
+        case t if t.implements[T] =>
           if (seen.contains(System.identityHashCode(t))) Option(t)
           else {
-            results.append(t)
+            results.append(t.asInstanceOf[T])
             seen = seen :+ System.identityHashCode(t)
             Option(t)
           }
