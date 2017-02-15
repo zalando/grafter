@@ -303,6 +303,24 @@ val application: Application =
     replace[Database](mockDb)
 ```
 
+### Inspect your application graph
+
+It might be necessary to inspect (or test) the results of modifications on your application graph after several modifications with
+`singleton` and `modify`.
+
+For example you might want to collect all the distinct components of a given type:
+```scala
+import org.zalando.grafter.syntax.query._
+
+val application = Application.prod.
+  replace[HttpConfig](HttpConfig("localhost", 8080))
+
+// this should contain the previously set http config
+val httpConfigs: List[HttpConfig] =
+  application.collect[HttpConfig]
+
+```
+
 ### Integrate Grafter to your application
 
 In order for the `GenericReader` functionality to work you need to
