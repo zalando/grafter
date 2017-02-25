@@ -321,6 +321,20 @@ val httpConfigs: List[HttpConfig] =
 
 ```
 
+You might also want to check what are all the components using a component of a given type:
+```scala
+import org.zalando.grafter.syntax.query._
+
+val application = Application.prod.
+  singleton[ExecutionService]
+
+// this is a map where the keys are distinct instances of ExecutionService
+// (there should be only one, since we made a singleton)
+// and a list of all the paths from that key to the root
+val usersOfExecutionService: Map[ExecutionService, List[List[Any]]] =
+  application.ancestors[ExecutionService]
+```
+
 ### Integrate Grafter to your application
 
 In order for the `GenericReader` functionality to work you need to
