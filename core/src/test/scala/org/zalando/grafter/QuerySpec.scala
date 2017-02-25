@@ -8,6 +8,7 @@ import syntax.all._
 class QuerySpec extends Specification with ThrownExpectations { def is = s2"""
 
  Nodes of a given type can be collected in a graph $collectNodes
+ Ancestors of a given type can be collected in a graph $collectAncestors
 
 """
 
@@ -22,6 +23,28 @@ class QuerySpec extends Specification with ThrownExpectations { def is = s2"""
 
     graph.collect[F] ==== List(f1, f2)
     graph.singleton[E].collect[E] ==== List(e1)
+  }
+
+  def collectAncestors = {
+    val (e1, e2) = (E("e1"), E("e2"))
+    val (f1, f2) = (F1("f1"), F2("f2"))
+    val (d1, d2) = (D("d1"), D("d2"))
+
+    val b = B(d1, e1, f1)
+    val c = C(d2, e2, f2)
+    val a = A(b, c)
+
+    val graph = a
+
+    // there are 2 f nodes, each of them has just one path to the root a
+    graph.ancestors[F] ==== Map(f1 -> List(List(b, a)), f2 -> List(List(c, a)))
+
+    // there is 1 e node after being made a singleton, it has 2 paths to the root a
+    val c1 = C(d2, e1, f2)
+
+    graph.singleton[E].ancestors[E] ==== Map(e1 ->
+      List(List(b, A(b, c1)),
+           List(c1, A(b, c1))))
   }
 
 

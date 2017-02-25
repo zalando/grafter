@@ -208,7 +208,7 @@ object ExampleGraph {
       StopResult.eval(name)(())
   }
 
-  class E(name: String) extends Start with Stop {
+  class E(name: String) extends Start with Stop with Product {
     override def toString = name
 
     def start: Eval[StartResult] =
@@ -216,11 +216,21 @@ object ExampleGraph {
 
     def stop: Eval[StopResult] =
       StopResult.eval(name)(())
+
+    def productElement(n: Int): Any =
+      List(name)(n)
+
+    def productArity: Int =
+      1
+
+    def canEqual(that: Any): Boolean =
+      that match { case e: E => true; case _ => false }
   }
 
   object E {
     def apply(name: String) = new E(name)
   }
+
   case class ESub(name: String) extends E(name) {
     override def start: Eval[StartResult] =
       Eval.now(StartFailure(name))

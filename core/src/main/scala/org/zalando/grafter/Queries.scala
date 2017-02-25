@@ -5,6 +5,7 @@ import org.bitbucket.inkytonik.kiama.rewriting.MemoRewriter._
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 import Reflect._
+import org.bitbucket.inkytonik.kiama.relation.{Relation, Tree}
 
 trait Query {
   
@@ -31,6 +32,23 @@ trait Query {
     results.toList
   }
 
+  type Path = List[Any]
+
+  /** collect all ancestor paths of a node of type T in a graph */
+  def ancestors[T : ClassTag, G <: Product](graph: G): Map[T, List[Path]] = {
+    def ancestorsOf(r: Relation[Any, Any])(a: Any): Vector[Vector[Any]] = {
+      val image = r.image(a)
+      if (image.isEmpty) Vector(Vector()) else  image.flatMap(i => ancestorsOf(r)(i).map(i +: _))
+    }
+
+    def productChildren(t: Product): Vector[Product] =
+      Tree.treeChildren(t)
+
+    val relation = Relation.fromOneStep[Product](graph, productChildren).inverse.asInstanceOf[Relation[Any, Any]]
+    val collected = collect[T, G](graph)
+    collected.map(t => (t, ancestorsOf(relation)(t).toList.map(_.toList))).toMap
+  }
+
 }
 
 object Query extends Query with QuerySyntax
@@ -40,9 +58,12 @@ object Query extends Query with QuerySyntax
  */
 trait QuerySyntax {
 
-  implicit class QueryOps[G](graph: G) {
+  implicit class QueryOps[G <: Product](graph: G) {
     def collect[T : ClassTag]: List[T] =
       Query.collect[T, G](graph)
+
+    def ancestors[T : ClassTag]: Map[T, List[Query.Path]] =
+      Query.ancestors[T, G](graph)
   }
 }
 
