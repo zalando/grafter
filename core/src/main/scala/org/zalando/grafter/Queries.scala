@@ -34,11 +34,20 @@ trait Query {
 
   type Path = List[Any]
 
+  /**
+   * collect ancestor paths of a node of type T in a graph and show simple class names
+   * The hashcode of the keys is appended to make sure we don't lose keys
+   */
+  def ancestorNames[T : ClassTag, G <: Product](graph: G): Map[String, List[List[String]]] =
+    ancestors(graph).map { case (key, value) =>
+      (s"${key.getClass.getSimpleName} (${key.hashCode})", value.map(_.map(_.getClass.getSimpleName)))
+    }
+
   /** collect all ancestor paths of a node of type T in a graph */
   def ancestors[T : ClassTag, G <: Product](graph: G): Map[T, List[Path]] = {
     def ancestorsOf(r: Relation[Any, Any])(a: Any): Vector[Vector[Any]] = {
       val image = r.image(a)
-      if (image.isEmpty) Vector(Vector()) else  image.flatMap(i => ancestorsOf(r)(i).map(i +: _))
+      if (image.isEmpty) Vector(Vector()) else  image.flatMap(i => ancestorsOf(r)(i).map(i +: _).distinct)
     }
 
     def productChildren(t: Product): Vector[Product] =
@@ -46,7 +55,7 @@ trait Query {
 
     val relation = Relation.fromOneStep[Product](graph, productChildren).inverse.asInstanceOf[Relation[Any, Any]]
     val collected = collect[T, G](graph)
-    collected.map(t => (t, ancestorsOf(relation)(t).toList.map(_.toList))).toMap
+    collected.map(t => (t, ancestorsOf(relation)(t).toList.map(_.toList).distinct)).toMap
   }
 
 }
@@ -64,6 +73,9 @@ trait QuerySyntax {
 
     def ancestors[T : ClassTag]: Map[T, List[Query.Path]] =
       Query.ancestors[T, G](graph)
+
+    def ancestorNames[T : ClassTag]: Map[String, List[List[String]]] =
+      Query.ancestorNames[T, G](graph)
   }
 }
 
