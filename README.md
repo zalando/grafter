@@ -9,7 +9,7 @@
 There are [many](https://github.com/adamw/macwire) [libraries](https://github.com/google/guice) or [approaches](http://www.cakesolutions.net/teamblogs/2011/12/19/cake-pattern-in-depth) for doing [dependency injection](https://en.wikipedia.org/wiki/Dependency_injection) in Scala.
 Grafter goes back to the fundamentals of dependency injection by *just using constructor injection*: no reflection, no xml, no annotations, no inheritance or self-types.
  
-Then, Grafter add to constructor injection just the necessary support to:
+Then, Grafter adds to constructor injection just the necessary support to:
 
  - instantiate a component-based application from a configuration
  - fine-tune the wiring (create singletons)
@@ -150,7 +150,7 @@ in the system. But don't worry we can always change it later!
 
 #### Remove dependency on global config
 
-You may be wonder why a `HttpServer` statically depends on the `ApplicationConfig` here:
+You may be wondering why a `HttpServer` statically depends on the `ApplicationConfig` here:
 
 ```scala
 object HttpServer {
@@ -377,7 +377,7 @@ object ApplicationConfig extends GenericReader
 
 You add this library as a sbt dependency:
 ```scala
-libraryDependencies += "org.zalando" %% "grafter" % "1.3.1"
+libraryDependencies += "org.zalando" %% "grafter" % "1.4.2"
 ```
 
 ## Contributing
