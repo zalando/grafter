@@ -47,7 +47,7 @@ trait Query {
   /** collect all ancestor paths of a node of type T in a graph */
   def ancestors[T : ClassTag, G <: Product](graph: G): Map[T, List[Path]] = {
     def ancestorsOf(r: Relation[Any, Any])(a: Any): Vector[Vector[Any]] = {
-      val image = r.image(a)
+      val image = r.image(a).distinct
       if (image.isEmpty) Vector(Vector()) else  image.flatMap(i => ancestorsOf(r)(i).map(i +: _).distinct)
     }
 
