@@ -8,5 +8,4 @@ To avoid unnecessary work on either side, please stick to the following process:
 3. If we decide your concern needs code changes, we would be happy to accept a pull request.
 4. Pull requests must always contain tests for the functionality implemented / fixed
 
-In case you just want to help out and don't know where to start, [issues with "help wanted" label](https://github.com/zalando/grafter/issues?utf8=%E2%9C%93&q=is%3Aissue%20is%3Aopen%20label%3A%22help%20wanted%22) are good for first-time contributors. 
-
+In case you just want to help out and don't know where to start, [issues with "help wanted" label](https://github.com/zalando/grafter/issues?utf8=%E2%9C%93&q=is%3Aissue%20is%3Aopen%20label%3A%22help%20wanted%22) are good for first-time contributors.
