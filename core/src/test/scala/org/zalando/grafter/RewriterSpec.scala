@@ -18,6 +18,7 @@ class RewriterSpec extends Specification with ThrownExpectations { def is = s2""
  A replacement only works if we pass an instance of the same type                         $replaceWithDifferentType
  A node can be modified by a function based on the node type                              $modifyNode
  A node can be modified by a partial function based on the node type                      $modifyNodeWith
+ The first occurrence of a node (breadth-first) can be replaced                           $replaceFirstNode
 
 
  Startable components can be started in order from the bottom up                          $startInOrder
@@ -103,6 +104,14 @@ class RewriterSpec extends Specification with ThrownExpectations { def is = s2""
       case f: F2 => f.copy(name = "new name")
     }
     rewritten.b.f.name must_== "new name"
+  }
+
+  def replaceFirstNode = {
+    val d3 = D("d3")
+    val b3 = B(d3, E(""), F1(""))
+
+    graph.replaceFirst(d3).b.d ==== d3
+    graph.replaceFirst(d3).c.d ==== graph.c.d
   }
 
   def startInOrder =
