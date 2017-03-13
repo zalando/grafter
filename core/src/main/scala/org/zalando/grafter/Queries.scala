@@ -28,8 +28,23 @@ trait Query {
       })
 
     rewrite(collectStrategy)(graph)
-
     results.toList
+  }
+
+  /** collect the first node (breadth first) of type T in a graph */
+  def collectFirst[T : ClassTag, G](graph: G): Option[T] = {
+    var found: Option[T] = None
+
+    val collectFirstStrategy =
+      breadthfirst(strategy[Any] {
+        case t if t.implements[T] =>
+          if (found.isEmpty) found = Option(t.asInstanceOf[T])
+          Some(t)
+        case other => Some(other)
+      })
+
+    rewrite(collectFirstStrategy)(graph)
+    found
   }
 
   type Path = List[Any]
@@ -71,6 +86,9 @@ trait QuerySyntax {
   implicit class QueryOps[G <: Product](graph: G) {
     def collect[T : ClassTag]: List[T] =
       Query.collect[T, G](graph)
+
+    def collectFirst[T : ClassTag]: Option[T] =
+      Query.collectFirst[T, G](graph)
 
     def ancestors[T : ClassTag]: Map[T, List[Query.Path]] =
       Query.ancestors[T, G](graph)

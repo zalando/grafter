@@ -22,7 +22,13 @@ trait Rewriter {
     * Take the first value of a given type (approximated with a ClassTag) and replace it everywhere in the graph
     */
   def singleton[S : ClassTag, G](graph: G): G =
-    replaceWithStrategy(singletonStrategy[S], graph)
+    replaceWithStrategy(singletonStrategy, graph)
+
+  /**
+    * Make singletons of all components
+    */
+  def singletons[G](predicate: Any => Boolean)(graph: G): G =
+    rewrite(everywherebu(singletonsStrategy(predicate)))(graph)
 
   /**
     * Replace all values of type S, with the same value
@@ -31,7 +37,13 @@ trait Rewriter {
     replaceWithStrategy(replaceStrategy[S](s), graph)
 
   /**
-    * Replace with a given strategy
+    * Replace the first value of type S (topdown, with another value
+    */
+  def replaceFirst[S : ClassTag, G](s: S, graph: G): G =
+    replaceWithStrategy(replaceStrategy[S](s), graph)
+
+  /**
+    * Replace with a given strategy (top down)
     */
   def replaceWithStrategy[G](strategy: Strategy, graph: G): G =
     rewrite(everywheretd(strategy))(graph)
@@ -69,6 +81,26 @@ trait Rewriter {
             s = Some(v.asInstanceOf[S])
             Some(v)
         }
+      case other => None
+    }
+  }
+
+  def singletonsStrategy(predicate: Any => Boolean): Strategy = {
+    val singletons: scala.collection.mutable.HashMap[String, Any] =
+      new scala.collection.mutable.HashMap[String, Any]
+
+    strategy[Any] {
+      case v if predicate(v) =>
+        val className = v.getClass.getName
+
+        singletons.get(className) match {
+          case Some(s) =>
+            Some(s)
+          case None =>
+            singletons.put(className, v)
+            Some(v)
+        }
+
       case other => None
     }
   }
@@ -158,8 +190,14 @@ trait RewriterSyntax {
     def singleton[S : ClassTag]: G =
       Rewriter.singleton[S, G](graph)
 
+    def singletons(predicate: Any => Boolean): G =
+      Rewriter.singletons(predicate)(graph)
+
     def replace[S : ClassTag](s: S): G =
       Rewriter.replace[S, G](s, graph)
+
+    def replaceFirst[S : ClassTag](s: S): G =
+      Rewriter.replaceFirst[S, G](s, graph)
 
     def replaceWith[T](s: PartialFunction[T, Option[T]]): G =
       Rewriter.replaceWith(s, graph)
