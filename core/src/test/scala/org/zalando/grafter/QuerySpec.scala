@@ -7,7 +7,8 @@ import syntax.all._
 
 class QuerySpec extends Specification with ThrownExpectations { def is = s2"""
 
- Nodes of a given type can be collected in a graph $collectNodes
+ Nodes of a given type can be collected in a graph     $collectNodes
+ The first node of a given type can be collected       $collectFirstNode
  Ancestors of a given type can be collected in a graph $collectAncestors
 
 """
@@ -23,6 +24,18 @@ class QuerySpec extends Specification with ThrownExpectations { def is = s2"""
 
     graph.collect[F] ==== List(f1, f2)
     graph.singleton[E].collect[E] ==== List(e1)
+  }
+
+  def collectFirstNode = {
+    val (e1, e2) = (E("e1"), E("e2"))
+    val (f1, f2) = (F1("f1"), F1("f2"))
+    case class G(e1: E, values: List[Any], f: F)
+
+    val graph =
+      G(e1, List(e2, f2), f1)
+
+    // the search is breadth-first otherwise we would get f2
+    graph.collectFirst[F] ==== Option(f1)
   }
 
   def collectAncestors = {

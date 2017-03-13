@@ -10,6 +10,7 @@ class RewriterSpec extends Specification with ThrownExpectations { def is = s2""
 
  An object graph can be rewritten with a node becoming a singleton object
    All identical nodes (having the same type) are replaced by just the first found instance $makeSingleton
+   Singletons can be made according to a predicate                                          $makeSingletonPredicate
 
  An instance can be passed and be replaced everywhere                                     $replace
  An instance of a subtype can be passed and be replaced everywhere                        $replaceWithSubtype
@@ -41,32 +42,40 @@ class RewriterSpec extends Specification with ThrownExpectations { def is = s2""
   def makeSingleton = {
     val rewritten = graph.singleton[D]
 
-    (rewritten.b.d must be(rewritten.c.d)) and
-      (rewritten.b.d must_== D("d1"))
+    rewritten.b.d must be(rewritten.c.d)
+    rewritten.b.d must_== D("d1")
+  }
+
+  def makeSingletonPredicate = {
+    val rewritten = graph.singletons(a => a.isInstanceOf[D])
+
+    rewritten.b.d must be(rewritten.c.d)
+    rewritten.b.d must_== D("d1")
+
   }
 
   def replace = {
     val d = D("d3")
     val rewritten = graph.replace(d)
 
-    (rewritten.b.d must be(rewritten.c.d)) and
-      (rewritten.b.d must be(d))
+    rewritten.b.d must be(rewritten.c.d)
+    rewritten.b.d must be(d)
   }
 
   def replaceWithSubtype = {
     val e: E = ESub("sub")
     val rewritten = graph.replace(e)
 
-    (rewritten.b.e must be(rewritten.c.e)) and
-      (rewritten.b.e must be(e))
+    rewritten.b.e must be(rewritten.c.e)
+    rewritten.b.e must be(e)
   }
 
   def replaceWithInterfaceSubtype = {
     val f: F = F2("f2")
     val rewritten = graph.replace(f)
 
-    (rewritten.b.f must be(rewritten.c.f)) and
-      (rewritten.b.f must be(f))
+    rewritten.b.f must be(rewritten.c.f)
+    rewritten.b.f must be(f)
   }
 
   def replaceWithDifferentType = {
@@ -74,8 +83,8 @@ class RewriterSpec extends Specification with ThrownExpectations { def is = s2""
     val f = F2("f2")
     val rewritten = graph.replace(f)
 
-    (rewritten.b.f must not be rewritten.c.f) and
-      (rewritten.b.f must not be f)
+    rewritten.b.f must not be rewritten.c.f
+    rewritten.b.f must not be f
   }
 
   def modifyNode = {
