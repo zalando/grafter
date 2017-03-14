@@ -66,13 +66,13 @@ trait Query {
       if (image.isEmpty) Vector(Vector()) else  image.flatMap(i => ancestorsOf(r)(i).map(i +: _).distinct)
     }
 
-    def productChildren(t: Product): Vector[Product] =
-      Tree.treeChildren(t)
-
-    val relation = Relation.fromOneStep[Product](graph, productChildren).inverse.asInstanceOf[Relation[Any, Any]]
+    val relation = Query.relation(graph).inverse
     val collected = collect[T, G](graph)
     collected.map(t => (t, ancestorsOf(relation)(t).toList.map(_.toList).distinct)).toMap
   }
+
+  def relation[G <: Product](graph: G): Relation[Any, Any] =
+    Relation.fromOneStep[Product](graph, Tree.treeChildren).asInstanceOf[Relation[Any, Any]]
 
 }
 
