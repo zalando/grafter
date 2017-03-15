@@ -8,13 +8,13 @@ trait Visualize {
   type HashCode = Int
 
   /**
-   * Generate a representation of the graph induced by the rootComponent
+   * Generate a representation of the graph induced by the root component
    * in GraphViz DOT format (http://www.graphviz.org)
-   * A components is taken into account if its package is included and not excluded by
-   * the provided regular expressions.
+   *
+   * A filter can be used to filter out components
    */
   def asDotString[T <: Product](root:       T,
-                                filter:     Product => Boolean = Visualize.packageFilter(),
+                                filter:     Product => Boolean = _ => true,
                                 nodeFormat: String = "[shape=box]"): String = {
 
     val relation = Relation.fromOneStep[Product](root, p => Tree.treeChildren(p).filter(filter))
@@ -76,6 +76,10 @@ trait Visualize {
 
 object Visualize extends Visualize {
 
+  /**
+   * This filter keeps a component if its package is included and not excluded by
+   * the provided regular expressions.
+   */
   def packageFilter(includePackages: Regex = ".*".r,
                     excludePackages: Option[Regex] = None): Product => Boolean = (c: Product) => {
     val packageName = c.getClass.getPackage.getName
