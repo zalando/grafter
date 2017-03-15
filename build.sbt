@@ -36,7 +36,7 @@ lazy val aggregateCompile = ScopeFilter(
 lazy val commonSettings = Seq(
   organization         := "org.zalando",
   name                 := "grafter",
-  version in ThisBuild := "1.4.8"
+  version in ThisBuild := "1.4.9"
 )
 
 lazy val testSettings = Seq(
@@ -64,6 +64,8 @@ lazy val compilationSettings = Seq(
     "-Ywarn-numeric-widen",
     "-Ywarn-dead-code",
     "-Yno-adapted-args",
+    // to debug the macros
+    //"-Ymacro-debug-lite",
     "-language:_",
     "-target:jvm-1.8",
     "-encoding", "UTF-8"
