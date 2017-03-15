@@ -10,13 +10,7 @@ class VisualizeSpec extends Specification { def is = s2"""
  A package filter can be used to only keep specified classes in the resulting graph $s2
 
 """
-
-  case class A()
-  case class B(a: A)
-  case class C(a: A, b1: B, b2: B)
-  case class D(c1: C, c2: C)
-
-  case class E(a: A, foo: Foo)
+  import Graph._
 
   def s1 = {
 
@@ -55,14 +49,22 @@ class VisualizeSpec extends Specification { def is = s2"""
     val filter = Visualize.packageFilter(includePackages = "org.zalando.grafter".r, excludePackages = Some("org.zalando.grafter.visualize".r))
     val dot = app.asDotString(filter)
 
-
     dot ====
       s"""|strict digraph {
           |  "A" [shape=box];
           |  "E" [shape=box];
           |  "E" -> "A"
           |}""".stripMargin
-
   }
 
+}
+
+object Graph {
+
+  case class A()
+  case class B(a: A)
+  case class C(a: A, b1: B, b2: B)
+  case class D(c1: C, c2: C)
+
+  case class E(a: A, foo: Foo)
 }

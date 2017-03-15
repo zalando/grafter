@@ -22,7 +22,7 @@ trait Rewriter {
     * Take the first value of a given type (approximated with a ClassTag) and replace it everywhere in the graph
     */
   def singleton[S : ClassTag, G](graph: G): G =
-    replaceWithStrategy(singletonStrategy, graph)
+    rewriteWithStrategy(singletonStrategy, graph)
 
   /**
     * Make singletons of all components
@@ -40,31 +40,37 @@ trait Rewriter {
     * Replace all values of type S, with the same value
     */
   def replace[S : ClassTag, G](s: S, graph: G): G =
-    replaceWithStrategy(replaceStrategy[S](s), graph)
+    rewriteWithStrategy(replaceStrategy[S](s), graph)
 
   /**
     * Replace the first value of type S (topdown, with another value
     */
   def replaceFirst[S : ClassTag, G](s: S, graph: G): G =
-    replaceWithStrategy(replaceStrategy[S](s), graph)
+    rewriteFirstWithStrategy(replaceStrategy[S](s), graph)
 
   /**
     * Replace with a given strategy (top down)
     */
-  def replaceWithStrategy[G](strategy: Strategy, graph: G): G =
+  def rewriteWithStrategy[G](strategy: Strategy, graph: G): G =
     rewrite(everywheretd(strategy))(graph)
+
+  /**
+    * Replace with a given strategy (breadth first)
+    */
+  def rewriteFirstWithStrategy[G](strategy: Strategy, graph: G): G =
+    rewrite(topBreadthfirst(strategy))(graph)
 
   /**
     * Replace with a given partial function
     */
   def replaceWith[G, T](s: PartialFunction[T, Option[T]], graph: G): G =
-    replaceWithStrategy(strategy(s), graph)
+    rewriteWithStrategy(strategy(s), graph)
 
   /**
     * Modify with a given function
     */
   def modify[G, T : ClassTag](f: T => T, graph: G): G =
-    replaceWithStrategy(strategy[T] {
+    rewriteWithStrategy(strategy[T] {
       case t if t.implements[T] => Some(f(t))
     }, graph)
 
@@ -72,7 +78,7 @@ trait Rewriter {
    * Modify with a given Partial function
    */
   def modifyWith[G, T : ClassTag](f: PartialFunction[T, T], graph: G): G =
-    replaceWithStrategy(strategy[T] {
+    rewriteWithStrategy(strategy[T] {
       case t if t.implements[T] => Some(f.applyOrElse(t, (t1: T) => t1))
     }, graph)
 
