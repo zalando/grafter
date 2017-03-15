@@ -241,7 +241,30 @@ val app1: Application =
 // make several singletons at once, based on a predicate
 val app2: Application =
   application.singletons(_.getClass.getName.startsWith("org.acme"))
+
+// make a singleton for each component of the application
+val app3: Application =
+  application.singletons
 ```
+
+Note that `grafter` will only try to make a singleton for classes which are instances of `scala.Product` or 
+which implement Kiama's `org.bitbucket.inkytonik.kiama.rewriting.Rewritable` trait.
+
+***Very important***
+
+Singletons are made based on the class name of a component, not its full type. This means that you
+could have runtime exceptions if you had parametrized components
+```scala
+case class C[T](t: T)
+
+case class App(c1: C[String], c2: C[Int])
+
+// BOOM!
+App(C(""), C(1)).singletons
+```
+
+In the example above making a singleton for `C` will take the first instance found, `c1` and assign it 
+to `c2` which would be incorrect.
 
 ### Start the application
 

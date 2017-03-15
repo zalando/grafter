@@ -96,7 +96,7 @@ trait Rewriter {
       new scala.collection.mutable.HashMap[String, Any]
 
     strategy[Any] {
-      case v if predicate(v) && canBeRewritten(v) =>
+      case v if predicate(v) && canBeSingleton(v) =>
         val className = v.getClass.getName
 
         singletons.get(className) match {
@@ -183,12 +183,10 @@ trait Rewriter {
     s <+ bf(s)
   }
 
-  private def canBeRewritten(v: Any): Boolean = v match {
-    case _ : Rewritable     => true
-    case _ : Product        => true
-    case _ : Map[_, _]      => true
-    case _ : Traversable[_] => true
-    case _                  => false
+  private def canBeSingleton(v: Any): Boolean = v match {
+    case _ : Rewritable => true
+    case _ : Product    => true
+    case _              => false
   }
 
 }
