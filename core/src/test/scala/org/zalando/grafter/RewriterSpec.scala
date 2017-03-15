@@ -11,6 +11,7 @@ class RewriterSpec extends Specification with ThrownExpectations { def is = s2""
  An object graph can be rewritten with a node becoming a singleton object
    All identical nodes (having the same type) are replaced by just the first found instance $makeSingleton
    Singletons can be made according to a predicate                                          $makeSingletonPredicate
+   Making singletons must not fail on nested classes                                        $makeSingletonNestedClass
 
  An instance can be passed and be replaced everywhere                                     $replace
  An instance of a subtype can be passed and be replaced everywhere                        $replaceWithSubtype
@@ -51,7 +52,12 @@ class RewriterSpec extends Specification with ThrownExpectations { def is = s2""
 
     rewritten.b.d must be(rewritten.c.d)
     rewritten.b.d must_== D("d1")
+  }
 
+  def makeSingletonNestedClass = {
+    final case class T()
+    final case class Test(t1: T, t2: T)
+    List(Test(T(), T())).singletons(_ => true) must not(throwAn[Exception])
   }
 
   def replace = {
