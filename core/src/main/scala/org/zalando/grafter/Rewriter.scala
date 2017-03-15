@@ -1,8 +1,7 @@
 package org.zalando.grafter
 
 import cats.Eval
-import org.bitbucket.inkytonik.kiama.rewriting.MemoRewriter._
-import org.bitbucket.inkytonik.kiama.rewriting.Strategy
+import org.bitbucket.inkytonik.kiama.rewriting.{MemoRewriter, Rewritable, Strategy}
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
@@ -17,12 +16,19 @@ import Reflect._
   *
   */
 trait Rewriter {
+  import GrafterMemoRewriter._
 
   /**
     * Take the first value of a given type (approximated with a ClassTag) and replace it everywhere in the graph
     */
   def singleton[S : ClassTag, G](graph: G): G =
     replaceWithStrategy(singletonStrategy, graph)
+
+  /**
+    * Make singletons of all components
+    */
+  def singletons[G](graph: G): G =
+    singletons[G]((_: Any) => true)(graph)
 
   /**
     * Make singletons of all components
@@ -72,6 +78,7 @@ trait Rewriter {
 
   def singletonStrategy[S](implicit tag: ClassTag[S]): Strategy = {
     var s: Option[S] = None
+
     strategy[Any] {
       case tag(v) =>
         s match {
@@ -81,7 +88,6 @@ trait Rewriter {
             s = Some(v.asInstanceOf[S])
             Some(v)
         }
-      case other => None
     }
   }
 
@@ -90,7 +96,7 @@ trait Rewriter {
       new scala.collection.mutable.HashMap[String, Any]
 
     strategy[Any] {
-      case v if predicate(v) =>
+      case v if predicate(v) && canBeRewritten(v) =>
         val className = v.getClass.getName
 
         singletons.get(className) match {
@@ -100,8 +106,6 @@ trait Rewriter {
             singletons.put(className, v)
             Some(v)
         }
-
-      case other => None
     }
   }
 
@@ -109,8 +113,6 @@ trait Rewriter {
     strategy[Any] {
       case v if v.implements[S] =>
         Some(s)
-      case other =>
-        None
     }
 
   /** start components from the bottom up */
@@ -173,6 +175,22 @@ trait Rewriter {
 
     results.toList
   }
+
+  def topBreadthfirst(s: Strategy): Strategy = {
+    def bf(s1: =>Strategy): Strategy =
+      one(s1) <+ one(bf(s1))
+
+    s <+ bf(s)
+  }
+
+  private def canBeRewritten(v: Any): Boolean = v match {
+    case _ : Rewritable     => true
+    case _ : Product        => true
+    case _ : Map[_, _]      => true
+    case _ : Traversable[_] => true
+    case _                  => false
+  }
+
 }
 
 object Rewriter extends Rewriter with RewriterSyntax
@@ -189,6 +207,9 @@ trait RewriterSyntax {
   implicit class Rewrite[G](graph: G) {
     def singleton[S : ClassTag]: G =
       Rewriter.singleton[S, G](graph)
+
+    def singletons: G =
+      Rewriter.singletons[G](graph)
 
     def singletons(predicate: Any => Boolean): G =
       Rewriter.singletons(predicate)(graph)
@@ -218,3 +239,8 @@ trait RewriterSyntax {
 
 object RewriterSyntax extends RewriterSyntax
 
+private object GrafterMemoRewriter extends MemoRewriter {
+  override def dup[T <: Product](t : T, children : Array[AnyRef]) : T =
+    try super.dup(t, children)
+    catch { case e: Throwable => t }
+}
