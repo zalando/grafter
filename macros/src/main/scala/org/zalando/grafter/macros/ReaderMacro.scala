@@ -23,26 +23,44 @@ object ReaderMacro {
     val inputs : (Tree, Tree, Option[Tree]) =
       annottees.toList match {
         case classDecl :: companion :: rest =>
-          (classDecl.tree, c.typecheck(classDecl.tree), Option(companion.tree))
+          (classDecl.tree, classDecl.tree, Option(companion.tree))
 
         case classDecl :: rest =>
-          (classDecl.tree, c.typecheck(classDecl.tree), None)
+          (classDecl.tree, classDecl.tree, None)
 
         case Nil => c.abort(c.enclosingPosition, "no target")
       }
 
     val outputs: List[Tree] = {
-      val (original, ClassDef(_, className, _, _), companion) = inputs
+      val (original, ClassDef(_, className, _, Template(_, _, fields)), companion) = inputs
 
-      val genericReader = {
+
+      def params = fields.collect { case ValDef(mods, fieldName, fieldType, _) if mods.hasFlag(Flag.CASEACCESSOR) =>
+        (fieldName, fieldType)
+      }
+
+      val typeParam = {
         TypeParamTraverser.traverse(c.macroApplication)
-        TypeParamTraverser.types
-          .headOption
-          .map { a =>
-            c.Expr[Any](
+        TypeParamTraverser.types.headOption.get
+      }
+
+      val klassName  = className.decodedName.toString
+      val implicits  = params.map { p => q"""private val ${TermName("_"+p._1)}: cats.data.Reader[$typeParam, ${p._2}] = implicitly[cats.data.Reader[$typeParam, ${p._2}]];""" }
+      val readValues = params.map(_._1).map { p => q"""val ${TermName("_"+p+"Value")} = ${TermName("_"+p)}.apply(r);""" }
+      val values     = List(params.map(_._1).map { p => q"""${TermName("_"+p+"Value")}""" })
+
+      val reader = {
+        TypeParamTraverser.traverse(c.macroApplication)
+        TypeParamTraverser.types.headOption.map { a =>
+          c.Expr[Any](
               q"""
-               import org.zalando.grafter.GenericReader._
-               implicit def reader: cats.data.Reader[$a, $className] = genericReader""")
+               implicit val reader: cats.data.Reader[$typeParam, ${TypeName(klassName)}] = {
+                 cats.data.Reader { r =>
+                   ..$readValues
+                   new ${TypeName(klassName)}(...$values)
+                 }
+               }
+               """)
           }
           .getOrElse {
             c.abort(c.enclosingPosition, "The @reader annotation requires a type parameter")
@@ -53,12 +71,17 @@ object ReaderMacro {
         case Some(q"""$mod object $companionName extends { ..$earlydefns } with ..$parents { ..$body }""") =>
           q"""$mod object $companionName extends { ..$earlydefns } with ..$parents {
            ..$body
-           ..$genericReader
+
+           ..$implicits
+
+           ..$reader
            }"""
 
         case None =>
           q"""object ${TermName(className.decodedName.toString)} {
-           ..$genericReader
+           ..$implicits
+
+           ..$reader
            }"""
       }
 
