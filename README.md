@@ -248,7 +248,16 @@ val app3: Application =
 ```
 
 Note that `grafter` will only try to make a singleton for classes which are instances of `scala.Product` or 
-which implement Kiama's `org.bitbucket.inkytonik.kiama.rewriting.Rewritable` trait.
+which implement Kiama's `org.bitbucket.inkytonik.kiama.rewriting.Rewritable` trait with the `singletons` method. 
+It will also *not* make singleton for `AnyVal` case classes or `final` case classes. This allows case classes 
+ representing String or Int parameters to *not* be made singletons
+```scala
+
+// instances of these classes will fortunately not
+// be made singletons (otherwise everything will have the same port!)
+case class DbUrl(value: String) extends AnyVal
+case class Port(value: Int) extends AnyVal
+```
 
 ***Very important***
 
