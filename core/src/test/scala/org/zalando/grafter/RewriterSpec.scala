@@ -12,6 +12,8 @@ class RewriterSpec extends Specification with ThrownExpectations { def is = s2""
    All identical nodes (having the same type) are replaced by just the first found instance $makeSingleton
    Singletons can be made according to a predicate                                          $makeSingletonPredicate
    Making singletons must not fail on nested classes                                        $makeSingletonNestedClass
+   Making singletons must not work on final classes                                         $makeSingletonFinalClass
+   Making singletons must not work on AnyVal case classes                                   $makeSingletonAnyValClass
 
  An instance can be passed and be replaced everywhere                                     $replace
  An instance of a subtype can be passed and be replaced everywhere                        $replaceWithSubtype
@@ -55,9 +57,19 @@ class RewriterSpec extends Specification with ThrownExpectations { def is = s2""
   }
 
   def makeSingletonNestedClass = {
-    final case class T()
-    final case class Test(t1: T, t2: T)
-    List(Test(T(), T())).singletons(_ => true) must not(throwAn[Exception])
+    case class T()
+    case class Test(t1: T, t2: T)
+    List(Test(T(), T())).singletons must not(throwAn[Exception])
+  }
+
+  def makeSingletonFinalClass = {
+    val app = List(TestAppForFinalSingleton(TestComponentForFinalSingleton("t1"), TestComponentForFinalSingleton("t2"))).singletons
+    app.head.t1 !=== app.head.t2
+  }
+
+  def makeSingletonAnyValClass = {
+    val app = List(TestAppForAnyValSingleton(TestComponentForAnyValSingleton("t1"), TestComponentForAnyValSingleton("t2"))).singletons
+    app.head.t1 !=== app.head.t2
   }
 
   def replace = {
@@ -316,4 +328,11 @@ object ExampleGraph {
   }
 
 }
+
+final case class TestComponentForFinalSingleton(t: String)
+case class TestAppForFinalSingleton(t1: TestComponentForFinalSingleton, t2: TestComponentForFinalSingleton)
+
+final case class TestComponentForAnyValSingleton(t: String)
+case class TestAppForAnyValSingleton(t1: TestComponentForAnyValSingleton, t2: TestComponentForAnyValSingleton)
+
 

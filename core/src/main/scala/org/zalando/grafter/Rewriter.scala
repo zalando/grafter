@@ -1,5 +1,6 @@
 package org.zalando.grafter
 
+import java.lang.reflect.Modifier
 import cats.Eval
 import org.bitbucket.inkytonik.kiama.rewriting.{MemoRewriter, Rewritable, Strategy}
 
@@ -190,8 +191,8 @@ trait Rewriter {
   }
 
   private def canBeSingleton(v: Any): Boolean = v match {
-    case _ : Rewritable => true
-    case _ : Product    => true
+    case _ : Rewritable => !Modifier.isFinal(v.getClass.getModifiers)
+    case _ : Product    => !Modifier.isFinal(v.getClass.getModifiers)
     case _              => false
   }
 
