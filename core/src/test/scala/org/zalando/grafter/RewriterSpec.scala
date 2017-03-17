@@ -19,6 +19,7 @@ class RewriterSpec extends Specification with ThrownExpectations { def is = s2""
  An instance of a subtype can be passed and be replaced everywhere                        $replaceWithSubtype
  An instance of a subtype with an interface can be passed and be replaced everywhere      $replaceWithInterfaceSubtype
  A replacement only works if we pass an instance of the same type                         $replaceWithDifferentType
+ A replacement works with value classes                                                   $replaceValueClass
  A node can be modified by a function based on the node type                              $modifyNode
  A node can be modified by a partial function based on the node type                      $modifyNodeWith
 
@@ -103,6 +104,12 @@ class RewriterSpec extends Specification with ThrownExpectations { def is = s2""
 
     rewritten.b.f must not be rewritten.c.f
     rewritten.b.f must not be f
+  }
+
+  def replaceValueClass = {
+    val graph = UseValueClasses(ValueClass(0), ValueClass(1))
+    val replaced = graph.replace(ValueClass(2))
+    (replaced.v1.value, replaced.v2.value) ==== ((2, 2))
   }
 
   def modifyNode = {
@@ -335,4 +342,6 @@ case class TestAppForFinalSingleton(t1: TestComponentForFinalSingleton, t2: Test
 final case class TestComponentForAnyValSingleton(t: String)
 case class TestAppForAnyValSingleton(t1: TestComponentForAnyValSingleton, t2: TestComponentForAnyValSingleton)
 
+case class UseValueClasses(v1: ValueClass, v2: ValueClass)
+case class ValueClass(value: Int) extends AnyVal
 
