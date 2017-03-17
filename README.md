@@ -337,6 +337,8 @@ val application: Application =
     replace[Database](mockDb)
 ```
 
+*Note*: due to a limitation with the rewriting, final case classes with one arguments *cannot* be replaced!
+
 ### Inspect your application graph
 
 It might be necessary to inspect (or test) the results of modifications on your application graph after several modifications with

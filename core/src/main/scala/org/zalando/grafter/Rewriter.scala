@@ -91,6 +91,7 @@ trait Rewriter {
         s match {
           case Some(singleton) =>
             Some(singleton)
+
           case None =>
             s = Some(v.asInstanceOf[S])
             Some(v)
@@ -109,6 +110,7 @@ trait Rewriter {
         singletons.get(className) match {
           case Some(s) =>
             Some(s)
+
           case None =>
             singletons.put(className, v)
             Some(v)
@@ -246,6 +248,17 @@ object RewriterSyntax extends RewriterSyntax
 
 private object GrafterMemoRewriter extends MemoRewriter {
   override def dup[T <: Product](t : T, children : Array[AnyRef]) : T =
-    try super.dup(t, children)
+    try super.dup(t, children map unbox)
     catch { case e: Throwable => t }
+
+  /** value classes must be unboxed before duplication */
+  def unbox(s: AnyRef): AnyRef = {
+    val klass = s.getClass
+    s match {
+      case p: Product if Modifier.isFinal(klass.getModifiers) && p.productArity == 1 =>
+        p.productElement(0).asInstanceOf[AnyRef]
+      case _ =>
+        s
+    }
+  }
 }
