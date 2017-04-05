@@ -62,4 +62,4 @@ application.asDotString ====
 
 `asDotString` produces a `.dot` graph which you can visualize with [webgraphviz](http://www.webgraphviz.com) or similar tools
 
-![webgraphviz](doc/webgraphviz-example.png)
+![webgraphviz](webgraphviz-example.png)
