@@ -9,6 +9,7 @@
 There are [many](https://github.com/adamw/macwire) [libraries](https://github.com/google/guice) or [approaches](http://www.cakesolutions.net/teamblogs/2011/12/19/cake-pattern-in-depth) for doing [dependency injection](https://en.wikipedia.org/wiki/Dependency_injection) in Scala.
 Grafter goes back to the fundamentals of dependency injection by *just using constructor injection*: no reflection, no xml, no annotations (unless you want them as a little sugar), no inheritance or self-types.
 
+ - [Installation](doc/installation.md)
  - [Introduction](doc/introduction.md)
  - [Components](doc/components.md)
  - [Configuration](doc/config.md)
