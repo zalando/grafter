@@ -1,13 +1,20 @@
 
 ### Singletons
 
-The next step is making sure that however deep our application graph is,
-we will always use one database, even if 2 components declare 2 dependencies
-to the database. This is done with the `Rewriter` object:
+Here we will make sure that however deep our application graph is, we will
+always use, in this case, one database, even if two different components
+depend on it. This is done with the `Rewriter` object, whose operations are
+enabled with the following `import`:
 
 ```scala
 import org.zalando.grafter.syntax.rewriter._
+```
 
+We can then call the `singletons` method on our application object to
+effectively rewrite the component tree and remove the duplicated objects.
+The following code shows three different ways of doing this:
+
+```scala
 val app1: Application =
   application.singleton[Database]
   
@@ -20,10 +27,11 @@ val app3: Application =
   application.singletons
 ```
 
-Note that `grafter` will only try to make a singleton for classes which are instances of `scala.Product` or 
-which implement Kiama's `org.bitbucket.inkytonik.kiama.rewriting.Rewritable` trait with the `singletons` method. 
-It will also *not* make singleton for `AnyVal` case classes or `final` case classes. This allows case classes 
-representing String or Int parameters to *not* be made singletons
+Note that `grafter` will only try to make a singleton for classes which are instances of
+`scala.Product` or which implement Kiama's `org.bitbucket.inkytonik.kiama.rewriting.Rewritable`
+trait with the `singletons` method. It will also _not_ make singletons for `case class`es that
+extend `AnyVal` or that are marked as `final`. This allows `case class`es representing `String`
+or `Int` parameters (i.e. _value classes_) to _not_ be turned into singletons.
 
 ```scala
 // instances of these classes will fortunately not
