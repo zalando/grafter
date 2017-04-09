@@ -14,8 +14,8 @@ Grafter goes back to the fundamentals of dependency injection by *just using con
  - [Components](doc/components.md)
  - [Configuration](doc/config.md)
  - [Creating components](doc/creating.md)
- - [Starting and Stopping an Application](doc/start-stop.md)
  - [Singletons](doc/singletons.md)
+ - [Starting and Stopping an Application](doc/start-stop.md)
  - [Testing](doc/testing.md)
  - [Inspect the App Graph](doc/inspect-app-graph.md)
 
