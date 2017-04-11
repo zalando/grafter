@@ -35,7 +35,7 @@ val usersOfExecutionService: Map[ExecutionService, List[List[Any]]] =
 It is also very useful to be able to display a graph of your application with the `Visualize` functionality:
 
 ```scala
-import org.zalando.grafter.Visualize._
+import org.zalando.grafter.syntax.visualize._
 
 val application = Application.prod
 
