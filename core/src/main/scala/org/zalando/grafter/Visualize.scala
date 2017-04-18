@@ -32,6 +32,8 @@ trait Visualize {
    * in the .dot file / the drawn graph by appending a number to the nodes' names, e.g., "MyComponent # 1". This
    * method returns a map that contains a mapping from identityHashCode to such an index for each component that
    * is not a singleton.
+   *
+   * The pair (Int, Int) represents (instance number, total number of instances)
    */
   private def indexByIdentityHashCode(nodes: Vector[Node]): Map[HashCode, (Int, Int)] =
     nodes.groupBy(_.p.getClass.getName).flatMap { case (_, vs) =>
@@ -48,7 +50,10 @@ trait Visualize {
       copy(indexes = indexes)
 
     override def hashCode: Int =
-      p.identityHashCode
+      System.identityHashCode(p)
+
+    override def equals(a: Any): Boolean =
+      a.hashCode == hashCode
 
     private def showIndex: String =
       indexes.get(p.identityHashCode).filter(_._2 > 1)
