@@ -1,10 +1,12 @@
 package org.zalando.grafter
 
 import org.specs2.Specification
+import org.specs2.execute.Result
+import org.specs2.matcher.ThrownExpectations
 import org.zalando.grafter.visualize.Foo
 import org.zalando.grafter.syntax.visualize._
 
-class VisualizeSpec extends Specification { def is = s2"""
+class VisualizeSpec extends Specification with ThrownExpectations { def is = s2"""
 
  The example graph must be correctly serialized into .dot format $s1
  A package filter can be used to only keep specified classes in the resulting graph $s2
@@ -12,7 +14,7 @@ class VisualizeSpec extends Specification { def is = s2"""
 """
   import Graph._
 
-  def s1 = {
+  def s1 = Result.foreach(1 to 1000) { i =>
 
     val a = A()
     val b1 = B(a)
