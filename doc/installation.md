@@ -4,7 +4,7 @@
 To use Grafter you can add it as a dependency in your sbt build settings:
 
 ```scala
-libraryDependencies += "org.zalando" %% "grafter" % "1.4.8"
+libraryDependencies += "org.zalando" %% "grafter" % "1.4.12"
 ```
 
 Grafter also provides some annotations to help reducing the boilerplate in
