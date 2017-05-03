@@ -1,7 +1,6 @@
 package org.zalando.grafter
 
 import shapeless._
-import shapeless.labelled._
 import cats.data._
 
 /**
@@ -16,15 +15,13 @@ trait GenericReader {
   implicit def hnilReader[R]: Reader[R, HNil] =
     Reader(_ => HNil)
 
-  implicit def hconsReader[R, K <: Symbol, H, T <: HList](implicit
-                                                           key: Witness.Aux[K],
-                                                           readerHead: Lazy[Reader[R, H]],
-                                                           readerTail: Lazy[Reader[R, T]]
-  ): Reader[R, FieldType[K, H] :: T] =
-    Reader((r: R) => field[K](readerHead.value(r)) :: readerTail.value(r))
+  implicit def hconsReader[R, H, T <: HList](implicit readerHead: Lazy[Reader[R, H]],
+                                                      readerTail: Lazy[Reader[R, T]]
+  ): Reader[R, H :: T] =
+    Reader((r: R) => readerHead.value(r) :: readerTail.value(r))
 
   implicit def genericReader[R, A, Repr](implicit
-    gen: LabelledGeneric.Aux[A, Repr],
+    gen:  Generic.Aux[A, Repr],
     repr: Lazy[Reader[R, Repr]]
   ): Reader[R, A] =
     Reader((r: R) => gen.from(repr.value(r)))
