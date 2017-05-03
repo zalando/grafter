@@ -30,6 +30,7 @@ case class C()
 @reader[ApplicationConfig]
 case class R1(r2: R2, r3: R3, r4: R4) {
   private val field1 = "should not be used for the reader instance"
+  println(field1)
 }
 
 @reader[ApplicationConfig]
