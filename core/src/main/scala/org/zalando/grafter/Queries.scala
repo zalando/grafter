@@ -5,7 +5,7 @@ import org.bitbucket.inkytonik.kiama.rewriting.MemoRewriter._
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 import Reflect._
-import org.bitbucket.inkytonik.kiama.relation.{Relation, Tree}
+import org.bitbucket.inkytonik.kiama.relation._
 
 trait Query {
   
@@ -47,22 +47,22 @@ trait Query {
     found
   }
 
-  type Path = List[Any]
+  type Path = List[Product]
 
   /**
    * collect ancestor paths of a node of type T in a graph and show simple class names
    *  a list of pairs is returned where there can be duplicates in the key because
    *  there can be several instances of the same type
    */
-  def ancestorNames[T : ClassTag, G <: Product](graph: G): List[(String, List[List[String]])] =
+  def ancestorNames[T <: Product : ClassTag, G <: Product](graph: G): List[(String, List[List[String]])] =
     ancestors(graph).toList.map { case (key, value) =>
       (key.getClass.getSimpleName, value.map(_.map(_.getClass.getSimpleName)))
     }
 
   /** collect all ancestor paths of a node of type T in a graph */
-  def ancestors[T : ClassTag, G <: Product](graph: G): Map[T, List[Path]] = {
-    def ancestorsOf(r: Relation[Any, Any])(a: Any): Vector[Vector[Any]] = {
-      val image = r.image(a).distinct
+  def ancestors[T <: Product : ClassTag, G <: Product](graph: G): Map[T, List[Path]] = {
+    def ancestorsOf(r: Relation[Product, Product])(a: Product): Vector[Vector[Product]] = {
+      val image = r(a).distinct
       if (image.isEmpty) Vector(Vector()) else  image.flatMap(i => ancestorsOf(r)(i).map(i +: _).distinct)
     }
 
@@ -71,8 +71,20 @@ trait Query {
     collected.map(t => (t, ancestorsOf(relation)(t).toList.map(_.toList).distinct)).toMap
   }
 
-  def relation[G <: Product](graph: G): Relation[Any, Any] =
-    Relation.fromOneStep[Product](graph, Tree.treeChildren).asInstanceOf[Relation[Any, Any]]
+  def relation[G <: Product](graph: G, filter: Product => Boolean = (_:Product) => true): Relation[Product, Product] = {
+    def makeChildrenRelation(g: Product, r: Relation[Product, Product]): Unit = {
+      val children = TreeRelation.treeChildren(g).filter(filter)
+      if (children.nonEmpty) {
+        children.foreach { c =>
+          r.put(g, c)
+          makeChildrenRelation(c, r)
+        }
+      }
+    }
+    val r = new Relation[Product, Product]
+    makeChildrenRelation(graph, r)
+    r
+  }
 
 }
 
@@ -87,13 +99,13 @@ trait QuerySyntax {
     def collect[T : ClassTag]: List[T] =
       Query.collect[T, G](graph)
 
-    def collectFirst[T : ClassTag]: Option[T] =
+    def collectFirst[T <: Product : ClassTag]: Option[T] =
       Query.collectFirst[T, G](graph)
 
-    def ancestors[T : ClassTag]: Map[T, List[Query.Path]] =
+    def ancestors[T <: Product : ClassTag]: Map[T, List[Query.Path]] =
       Query.ancestors[T, G](graph)
 
-    def ancestorNames[T : ClassTag]: List[(String, List[List[String]])] =
+    def ancestorNames[T <: Product : ClassTag]: List[(String, List[List[String]])] =
       Query.ancestorNames[T, G](graph)
   }
 }
