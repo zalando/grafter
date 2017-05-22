@@ -36,7 +36,7 @@ lazy val aggregateCompile = ScopeFilter(
 lazy val commonSettings = Seq(
   organization         := "org.zalando",
   name                 := "grafter",
-  version in ThisBuild := "1.5.0"
+  version in ThisBuild := "1.6.0"
 )
 
 lazy val testSettings = Seq(
@@ -48,8 +48,8 @@ lazy val testSettings = Seq(
 )
 
 lazy val compilationSettings = Seq(
-  scalaVersion := "2.12.1",
-  crossScalaVersions := Seq("2.11.8", scalaVersion.value),
+  scalaVersion := "2.12.2",
+  crossScalaVersions := Seq("2.11.11", scalaVersion.value),
   ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) },
   addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
   scalacOptions ++= Seq(

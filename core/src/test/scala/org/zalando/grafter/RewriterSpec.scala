@@ -273,7 +273,7 @@ object ExampleGraph {
       Eval.now(StopFailure(name))
   }
 
-  trait F {
+  trait F extends Product {
     def name: String
   }
 

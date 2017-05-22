@@ -1,6 +1,6 @@
 
 lazy val catsVersion       = "0.9.0"
-lazy val kiamaVersion      = "2.0.0"
+lazy val kiamaVersion      = "2.1.0-RC1"
 lazy val specs2Version     = "3.8.9"
 lazy val shapelessVersion  = "2.3.2"
 

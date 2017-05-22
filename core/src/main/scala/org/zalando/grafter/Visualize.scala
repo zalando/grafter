@@ -1,7 +1,8 @@
 package org.zalando.grafter
 
+import org.bitbucket.inkytonik.kiama.relation.Relation
+
 import scala.util.matching.Regex
-import org.bitbucket.inkytonik.kiama.relation.{Relation, Tree}
 
 trait Visualize {
 
@@ -17,15 +18,18 @@ trait Visualize {
                                 filter:     Product => Boolean = _ => true,
                                 nodeFormat: String = "[shape=box]"): String = {
 
-    val relation = Relation.fromOneStep[Product](root, p => Tree.treeChildren(p).filter(filter))
+    val relation = Query.relation(root, filter)
     val nodes = (relation.domain ++ relation.range).map(p => Node(p)).distinct
     val indexes: Map[HashCode, (Int, Int)] = indexByIdentityHashCode(nodes)
 
     val indexedNodes = nodes.map(_.setIndexes(indexes))
-    val arcs = relation.graph.map { case (s, t) => (Node(s, indexes), Node(t, indexes)) }.distinct
+    val edges = getEdges(relation).map { case (s, t) => (Node(s, indexes), Node(t, indexes)) }.distinct.sorted
 
-    dotSpecification(indexedNodes, arcs, nodeFormat)
+    dotSpecification(indexedNodes, edges, nodeFormat)
   }
+
+  private def getEdges[T, U](relation: Relation[T, U]): Vector[(T, U)] =
+    relation.domain.flatMap(t => relation(t).map((t, _)))
 
   /**
    * When a component is not a singleton, we want to distinguish between different instances of the same class
@@ -40,7 +44,7 @@ trait Visualize {
       vs.zipWithIndex.map { case (v, i) => (v.hashCode, (i + 1, vs.size)) }
     }
 
-  private case class Node(p: Product, indexes: Map[HashCode, (Int, Int)] = Map()) {
+  case class Node(p: Product, indexes: Map[HashCode, (Int, Int)] = Map()) {
     override def toString: String = {
       val name = p.getClass.getSimpleName.split("\\$").head
       s""""$name$showIndex""""
@@ -58,6 +62,13 @@ trait Visualize {
     private def showIndex: String =
       indexes.get(p.identityHashCode).filter(_._2 > 1)
         .map { case (i, total) => s" # $i/$total" }.getOrElse("")
+  }
+
+  object Node {
+    implicit def nodeOrdering: Ordering[Node] = new Ordering[Node] {
+      def compare(x: Node, y: Node): Int =
+        implicitly[Ordering[String]].compare(x.toString, y.toString)
+    }
   }
 
   private def dotSpecification(nodes: Vector[Node], arcs: Vector[(Node, Node)], nodeFormat: String): String = {
