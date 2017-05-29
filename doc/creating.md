@@ -1,95 +1,120 @@
 
-### Creating other components and using shapeless
+### Create components
 
-If a component depends on other components, its `Reader` instance depends on its dependencies
-`Reader` instances. Since this is all recursive and automatable, thanks to Shapeless, we can
-write the following:
+The first component we create is the configuration of the application. 
+It is a `case class`, possibly containing other case classes. For the examples below we will use the following:
 
 ```scala
-import org.zalando.grafter.GenericReader._
+case class ApplicationConfig(
+  http: HttpConfig,
+  db:   DbConfig
+)
 
-case class Application(httpServer: HttpServer, db: Database)
+case class HttpConfig(host: String,
+                      port: Int)
 
-object Application {
+case class DbConfig(url: String)
+```
 
-  // shapeless will automatically find Reader instances for HttpServer and Database
-  implicit def reader: Reader[ApplicationConfig, Application] =
-    genericReader
+#### The next component
+
+Our next component is a `HttpServer`. It needs its own piece of configuration, `HttpConfig`:
+```scala
+case class HttpServer(config: HttpConfig)
+``` 
+
+How do we get an `HttpConfig` in the first place? 
+We can get it from an `ApplicationConfig` using a [`Reader` instance](http://eed3si9n.com/herding-cats/Reader.html):
+
+```scala
+object HttpConfig {
+  // the HttpConfig is extracted directly from the application config
+  def reader: Reader[ApplicationConfig, HttpConfig] =
+    Reader(_.http)
 }
+```
 
-trait Database
+Then we can define an other `Reader` instance for `HttpServer` describing how to get a `HttpServer` from an `ApplicationConfig`:
 
-object Database {
-  implicit def reader: Reader[ApplicationConfig, Database] =
-    PostgresDatabase.reader
+```scala
+case class HttpServer(config: HttpConfig)
+
+import cats.data.Reader
+import cats.implicits._
+
+object HttpServer {
+  // we can "map" on a Reader!
+  def reader: Reader[ApplicationConfig, HttpServer] =
+    HttpConfig.reader.map(HttpServer.apply)
+
 }
+```
 
-case class PostgresDatabase(dbConfig: DbConfig) extends Start with Database {
-  def start: Eval[StartResult] =
-    StartResult.eval("postgres") {
-      // use dbConfig.url to initialize
-    }
-}
+We now have:
+
+ - a component describing the application configuration
+ - a component for the specific configuration of the `HttpServer`
+ - a component for the `HttpServer`
+ - `reader` methods to create instances of those components
+
+Let's scale this up to a full application.
+
+#### Create the full application
+
+The application is a top-level component, depending on the `HttpServer` and a new component, the `PostgresDatabase`, also having
+its own configuration:
+
+```scala
+case class PostgresDatabase(dbConfig: DbConfig)
 
 object PostgresDatabase {
-  implicit def reader: Reader[ApplicationConfig, PostgresDatabase] =
-    genericReader
+  def reader: Reader[ApplicationConfig, PostgresDatabase] =
+    DbConfig.reader.map(PostgresDatabase.apply)
 }
 
 object DbConfig {
-  implicit def reader: Reader[ApplicationConfig, DbConfig] =
+  def reader: Reader[ApplicationConfig, DbConfig] =
     Reader(_.db)
 }
 ```
 
-Note that `Application` depends on the `Database` interface. When we create an `Application`
-instance, `Database.reader` will be used and will provide a `Postgres` implementation by default.
-This means that there must *always* be a default implementation for each interface introduced
-in the system. But don't worry, we can always change it later!
-
-
-#### Remove dependency on global config
-
-You may be wondering why a `HttpServer` statically depends on the `ApplicationConfig` here:
+Then the full application:
 
 ```scala
-object HttpServer {
-  implicit def reader: Reader[ApplicationConfig, HttpServer] =
-    genericReader
+case class Application(httpServer: HttpServer, db: PostgresDatabase)
+
+object Application {
+
+  // Reader has a Monad instance so we can use it in a for comprehension
+  implicit def reader: Reader[ApplicationConfig, Application] =
+    for {
+       server   <- HttpServer.reader
+       database <- PostgresDatabase.reader
+    } yield Application(server, database)
+    
 }
 ```
 
-If you are creating a library, you will probably want to avoid this. To do it, lets parametrize
-the `reader` function with some config of type `A`:
-
-```scala
-object HttpServer {
-  implicit def dependentReader[A](implicit 
-    httpConfigReader: Reader[A, HttpConfig]
-  ): Reader[A, HttpServer] = genericReader
-}
-```
-
-This allows us to put the `HttpServer` into a reusable module and build it independently
-from the `ApplicationConfig`. Next, implicitly provide a `Reader[ApplicationConfing, HttpConfig]`
-and you may create the `HttpServer`.
-
-
-#### Create the full application
-
-First you need a full `ApplicationConfig`
+Finally we create an instance of `ApplicationConfig` (we can deserialize this object from a file if necessary):
 
 ```scala
 val prod: ApplicationConfig = ApplicationConfig(
-  http = HttpConfig("localhost", 8080)
+  http = HttpConfig("localhost", 8080),
   db   = DbConfig("jdbc:localhost/database")
 )
 ```
 
-Then we can summon the implicit `Reader` instance for `Application` and pass it the "prod"
-configuration:
+And get our fully wired application:
 
 ```scala
 val application: Application =
-  GenericReader[ApplicationConfig, Application].run(prod)
+  Application.reader.apply(prod)
 ```
+
+This simple example shows that we can structure an application as a set of case classes, and instantiate it with `Reader` methods.
+Next we will see how to remove all the boilerplate above!
+
+----
+Previous: [Grafter components](components.md)
+
+Next: [Remove boilerplate](boilerplate.md)
