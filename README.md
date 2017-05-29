@@ -13,13 +13,14 @@ Grafter goes back to the fundamentals of dependency injection by *just using con
 
  - [Installation](doc/installation.md)
  - [Introduction](doc/introduction.md)
- - [Components](doc/components.md)
- - [Configuration](doc/creating.md)
- - [Creating components](doc/creating.md)
- - [Singletons](doc/singletons.md)
- - [Starting and Stopping an Application](doc/start-stop.md)
+ - [Grafter Components](doc/components.md)
+ - [Creating your first components](doc/creating.md)
+ - [Remove boilerplate](doc/boilerplate.md)
+ - [Use interfaces](doc/interfaces.md)
+ - [Make singletons](doc/singletons.md)
+ - [Start and Stop an application](doc/start-stop.md)
  - [Testing](doc/testing.md)
- - [Inspect the App Graph](doc/inspect-app-graph.md)
+ - [Inspect the application graph](doc/inspect-app-graph.md)
 
 ---
 
