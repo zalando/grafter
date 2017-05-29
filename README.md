@@ -14,7 +14,7 @@ Grafter goes back to the fundamentals of dependency injection by *just using con
  - [Installation](doc/installation.md)
  - [Introduction](doc/introduction.md)
  - [Components](doc/components.md)
- - [Configuration](doc/config.md)
+ - [Configuration](doc/creating.md)
  - [Creating components](doc/creating.md)
  - [Singletons](doc/singletons.md)
  - [Starting and Stopping an Application](doc/start-stop.md)
@@ -32,7 +32,7 @@ And please check these [open issues](http://github.com/zalando/grafter/issues) f
 
 ### License
 
-The MIT License (MIT) Copyright © [2016] Zalando SE, https://tech.zalando.com
+The MIT License (MIT) Copyright © [2017] Zalando SE, https://tech.zalando.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 

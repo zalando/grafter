@@ -1,4 +1,3 @@
-
 ### Inspect your application graph
 
 It might be necessary to inspect (or test) the results of modifications on your application graph after several modifications with
@@ -63,3 +62,6 @@ application.asDotString ====
 `asDotString` produces a `.dot` graph which you can visualize with [webgraphviz](http://www.webgraphviz.com) or similar tools
 
 ![webgraphviz](webgraphviz-example.png)
+
+----
+Previous: [Testing](testing.md)
