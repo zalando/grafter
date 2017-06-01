@@ -5,6 +5,6 @@ resolvers ++= Seq(
 )
 
 addSbtPlugin("com.ambiata"    % "promulgate"    % "0.11.0-20160104104535-e21b092")
-addSbtPlugin("org.scoverage"  % "sbt-scoverage" % "1.4.0")
+addSbtPlugin("org.scoverage"  % "sbt-scoverage" % "1.5.0")
 addSbtPlugin("com.jsuereth"   % "sbt-pgp"       % "1.0.0")
-addSbtPlugin("org.xerial.sbt" % "sbt-sonatype"  %  "1.1")
+addSbtPlugin("org.xerial.sbt" % "sbt-sonatype"  % "1.1")
