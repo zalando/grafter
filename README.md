@@ -3,6 +3,7 @@
 [![Join the chat at https://gitter.im/zalando/grafter](https://badges.gitter.im/zalando/grafter.svg)](https://gitter.im/zalando/grafter?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://travis-ci.org/zalando/grafter.svg?branch=master)](https://travis-ci.org/zalando/grafter)
 [![Maven Central](https://img.shields.io/maven-central/v/org.zalando/grafter_2.12.svg)](https://maven-badges.herokuapp.com/maven-central/org.zalando/grafter_2.12)
+[![Codecove](https://codecov.io/github/zalando/grafter/coverage.svg?precision=2)
 
 ![grafting](https://autonomyacres.files.wordpress.com/2015/04/crown-cleft-grafting-fruit-trees.jpg?w=300&h=284)
 
