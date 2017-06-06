@@ -19,7 +19,7 @@ cache:
     - $HOME/.sbt/boot/
 
 script:
-  - sbt -sbt-version 0.13.15 -scala-version $TRAVIS_SCALA_VERSION ';clean ;coverage ;testOnly -- xonly ;coverageReport' && codecov
+  - sbt -sbt-version 0.13.15 -scala-version $TRAVIS_SCALA_VERSION ';clean ;set every coverageEnabled := true ;testOnly -- xonly ;coverageReport; coverageAggregate' && codecov
   - find $HOME/.sbt -name "*.lock" | xargs rm
   - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
 
