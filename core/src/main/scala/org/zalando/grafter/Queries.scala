@@ -71,20 +71,8 @@ trait Query {
     collected.map(t => (t, ancestorsOf(relation)(t).toList.map(_.toList).distinct)).toMap
   }
 
-  def relation[G <: Product](graph: G, filter: Product => Boolean = (_:Product) => true): Relation[Product, Product] = {
-    def makeChildrenRelation(g: Product, r: Relation[Product, Product]): Unit = {
-      val children = TreeRelation.treeChildren(g).filter(filter)
-      if (children.nonEmpty) {
-        children.foreach { c =>
-          r.put(g, c)
-          makeChildrenRelation(c, r)
-        }
-      }
-    }
-    val r = new Relation[Product, Product]
-    makeChildrenRelation(graph, r)
-    r
-  }
+  def relation[G <: Product](graph: G, filter: Product => Boolean = (_:Product) => true): Relation[Product, Product] =
+    Relation.fromOneStep(graph, g => TreeRelation.treeChildren(g).filter(filter))
 
 }
 
