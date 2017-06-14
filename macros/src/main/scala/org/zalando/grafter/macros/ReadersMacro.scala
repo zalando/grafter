@@ -36,17 +36,27 @@ object ReadersMacro {
                   cats.data.Reader(_.$fieldAccessor)""")
             }
 
+        def readerIdentity =
+          c.Expr[Any] {
+            q"""
+                implicit def ${TermName(className.toString.uncapitalize+"Reader")}: cats.data.Reader[$className, $className] =
+                  cats.data.Reader(identity)
+             """
+          }
+
         val companionObject =
         companion match {
           case Some(q"""$mod object $companionName extends { ..$earlydefns } with ..$parents { ..$body }""") =>
             q"""$mod object $companionName extends { ..$earlydefns } with ..$parents {
            ..$body
            ..$readerInstances
+           ..$readerIdentity
            }"""
 
           case None =>
             q"""object ${TermName(className.decodedName.toString)} {
            ..$readerInstances
+           ..$readerIdentity
            }"""
         }
         original :: companionObject :: Nil
@@ -57,6 +67,10 @@ object ReadersMacro {
     c.Expr[Any](Block(outputs, Literal(Constant(()))))
   }
 
+  implicit class StringOps(s: String) {
+    def uncapitalize: String =
+      s.take(1).map(_.toLower)++s.drop(1)
+  }
 }
 
 class readers extends StaticAnnotation {
