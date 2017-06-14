@@ -1,7 +1,5 @@
 package org.zalando.grafter
 
-import org.bitbucket.inkytonik.kiama.relation.Relation
-
 import scala.util.matching.Regex
 
 trait Visualize {
@@ -23,13 +21,10 @@ trait Visualize {
     val indexes: Map[HashCode, (Int, Int)] = indexByIdentityHashCode(nodes)
 
     val indexedNodes = nodes.map(_.setIndexes(indexes))
-    val edges = getEdges(relation).map { case (s, t) => (Node(s, indexes), Node(t, indexes)) }.distinct.sorted
+    val edges = relation.pairs.map { case (s, t) => (Node(s, indexes), Node(t, indexes)) }.distinct.sorted
 
     dotSpecification(indexedNodes, edges, nodeFormat)
   }
-
-  private def getEdges[T, U](relation: Relation[T, U]): Vector[(T, U)] =
-    relation.domain.flatMap(t => relation(t).map((t, _)))
 
   /**
    * When a component is not a singleton, we want to distinguish between different instances of the same class
