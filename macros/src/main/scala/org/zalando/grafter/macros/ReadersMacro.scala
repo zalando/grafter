@@ -2,69 +2,45 @@ package org.zalando.grafter.macros
 
 import scala.annotation.StaticAnnotation
 import scala.language.experimental.macros
+import ReaderMacros._
 
 object ReadersMacro {
 
   def impl(c: scala.reflect.macros.whitebox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
+    def name(t: Name) = t.decodedName.toString.trim
 
-    val inputs : (Tree, Tree, Option[Tree]) =
-      annottees.toList match {
-        case classDecl :: companion :: rest =>
-          (classDecl.tree, c.typecheck(classDecl.tree), Option(companion.tree))
+    val (classTree, companionTree): (Tree, Option[Tree]) =
+      annotationInputs(c)("readers")(annottees)
 
-        case classDecl :: rest =>
-          (classDecl.tree, c.typecheck(classDecl.tree), None)
+    val ClassDef(_, className, _, Template(_, _, fields)) = c.typecheck(classTree)
 
-        case Nil => c.abort(c.enclosingPosition, "no target")
+    val params = removeDuplicatedTypes(c)(fieldsNamesAndTypes(c)(fields))
+
+    val implicitReaders =
+      params.map { case (fieldName, fieldType) =>
+        val readerName = TermName(name(fieldName) + "Reader")
+
+        c.Expr[Any](
+          q"""
+           implicit def $readerName: cats.data.Reader[$className, $fieldType] =
+             cats.data.Reader(_.${TermName(name(fieldName))})""")
       }
 
-    val outputs: List[Tree] = inputs match {
-
-      case (original, ClassDef(_, className, _, Template(_, _, fields)), companion) =>
-        def readerInstances =
-          fields.
-            collect { case field @ ValDef(_, fieldName, fieldType, _) => (fieldName, fieldType) }.
-            groupBy(_._2.tpe.typeSymbol.name.decodedName.toString).values.map(_.head).toList.
-            map { case (fieldName, fieldType) =>
-              val readerName = TermName(fieldName.toString.trim+"Reader")
-              val fieldAccessor = TermName(fieldName.toString.trim)
-
-              c.Expr[Any](
-            q"""
-                implicit def $readerName: cats.data.Reader[$className, $fieldType] =
-                  cats.data.Reader(_.$fieldAccessor)""")
-            }
-
-        def readerIdentity =
-          c.Expr[Any] {
-            q"""
-                implicit def ${TermName(className.toString.uncapitalize+"Reader")}: cats.data.Reader[$className, $className] =
-                  cats.data.Reader(identity)
-             """
-          }
-
-        val companionObject =
-        companion match {
-          case Some(q"""$mod object $companionName extends { ..$earlydefns } with ..$parents { ..$body }""") =>
-            q"""$mod object $companionName extends { ..$earlydefns } with ..$parents {
-           ..$body
-           ..$readerInstances
-           ..$readerIdentity
-           }"""
-
-          case None =>
-            q"""object ${TermName(className.decodedName.toString)} {
-           ..$readerInstances
-           ..$readerIdentity
-           }"""
-        }
-        original :: companionObject :: Nil
-
-      case other => c.abort(c.enclosingPosition, "The @readers annotation can only annotate a simple case class with no extension or type parameters")
+    def readerIdentity = c.Expr[Any] {
+      q"""
+          implicit def ${TermName(className.toString.uncapitalize+"Reader")}: cats.data.Reader[$className, $className] =
+            cats.data.Reader(identity)
+      """
     }
 
-    c.Expr[Any](Block(outputs, Literal(Constant(()))))
+    outputs(c)(classTree, className, companionTree) {
+      q"""
+         ..$implicitReaders
+
+         ..$readerIdentity
+      """
+    }
   }
 
   implicit class StringOps(s: String) {
