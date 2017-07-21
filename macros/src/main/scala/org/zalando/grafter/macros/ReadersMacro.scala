@@ -1,54 +1,52 @@
 package org.zalando.grafter.macros
 
+import scala.meta._
 import scala.annotation.StaticAnnotation
-import scala.language.experimental.macros
 import ReaderMacros._
 
 object ReadersMacro {
 
-  def impl(c: scala.reflect.macros.whitebox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
-    import c.universe._
-    def name(t: Name) = t.decodedName.toString.trim
+  def expand(classDef: Defn.Class, objectDef: Option[Defn.Object]): Term.Block = {
 
-    val (classTree, companionTree): (Tree, Option[Tree]) =
-      annotationInputs(c)("readers")(annottees)
+    classDef match {
+      case Defn.Class(_, className, _, Ctor.Primary(_, _, paramss), _) =>
+        paramss.toList match {
+          case params :: _ =>
+            val implicitReaders =
+              collectParamTypesAndNames(params).toList.map {
+                case (paramType, paramName) =>
+                  val readerName = Pat.Var.Term(Term.Name(paramName.syntax + "Reader"))
 
-    val ClassDef(_, className, _, Template(_, _, fields)) = c.typecheck(classTree)
+                  q"""
+                  implicit val $readerName: cats.data.Reader[$className, $paramType] =
+                    cats.data.Reader(_.$paramName)
+                """
+              }
 
-    val params = removeDuplicatedTypes(c)(fieldsNamesAndTypes(c)(fields))
+        def readerIdentity =
 
-    val implicitReaders =
-      params.map { case (fieldName, fieldType) =>
-        val readerName = TermName(name(fieldName) + "Reader")
+            q"""
+                implicit val ${Pat.Var.Term(Term.Name(className.syntax.uncapitalize+"Reader"))}: cats.data.Reader[$className, $className] ={
+                  cats.data.Reader(identity)
+             }
+          """
 
-        c.Expr[Any](
-          q"""
-           implicit def $readerName: cats.data.Reader[$className, $fieldType] =
-             cats.data.Reader(_.${TermName(name(fieldName))})""")
+          output(classDef, objectDef)(readerIdentity +: implicitReaders:_*)
+
+          case Nil =>
+            output(classDef, objectDef)()
       }
 
-    def readerIdentity = c.Expr[Any] {
-      q"""
-          implicit def ${TermName(className.toString.uncapitalize+"Reader")}: cats.data.Reader[$className, $className] =
-            cats.data.Reader(identity)
-      """
-    }
-
-    outputs(c)(classTree, className, companionTree) {
-      q"""
-         ..$implicitReaders
-
-         ..$readerIdentity
-      """
     }
   }
 
-  implicit class StringOps(s: String) {
-    def uncapitalize: String =
-      s.take(1).map(_.toLower)++s.drop(1)
-  }
 }
 
 class readers extends StaticAnnotation {
-  def macroTransform(annottees: Any*): Any = macro ReadersMacro.impl
+
+  inline def apply(defn: Any): Any = meta {
+    val (classDef, objectDef) = annotatedClass("readers")(defn)
+    ReadersMacro.expand(classDef, objectDef)
+  }
+
 }
