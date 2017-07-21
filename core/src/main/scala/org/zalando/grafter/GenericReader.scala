@@ -37,6 +37,7 @@ trait GenericReader {
 
   /**
    * compose 2 readers instances where their implicit instances are available
+   * 
    * This is particularly useful when some components define their configuration in a distinct
    * library and you want to seamlessly extract that configuration from the application
    * configuration. See the "In a library" page in the User Guide
