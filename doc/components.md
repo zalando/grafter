@@ -29,7 +29,8 @@ Singletons can be made by rewriting the tree, effectively making it a graph.
  
  1. mocking the application for testing can also be done by rewriting the tree
 
-Now let's see how to create a full application step by step.
+Now let's see how to create a full application step by step. The final
+result is presented in [the full app](fullapp.md)
 
 ----
 Previous: [Installation](installation.md)

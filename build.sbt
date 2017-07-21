@@ -13,15 +13,31 @@ lazy val grafter = (project in file(".")).
 lazy val core = (project in file("core")).
   settings(
     compilationSettings ++
+    macroAnnotationSettings ++
     testSettings ++
     Seq(publishArtifact := false)
   )
 
+lazy val macroAnnotationSettings = Seq(
+  addCompilerPlugin("org.scalameta" % "paradise" % "3.0.0-M9" cross CrossVersion.full),
+  scalacOptions += "-Xplugin-require:macroparadise"
+)
+
 lazy val macros = project.in(file("macros")).
   settings(
     compilationSettings ++
+    Seq(scalacOptions in (Compile, console) ~= (_ filterNot (_ contains "paradise"))) ++ // macroparadise plugin doesn't work in repl yet.
+    Seq(libraryDependencies += "org.scalameta" %% "scalameta" % "1.8.0" % Provided) ++
+    macroAnnotationSettings ++
     Seq(publishArtifact := false)
   ).dependsOn(core)
+
+lazy val examples = (project in file("examples")).
+  settings(
+    compilationSettings ++
+      testSettings ++
+      Seq(publishArtifact := false)
+  ).dependsOn(core, macros)
 
 lazy val rootSettings = Seq(
   unmanagedSourceDirectories in Compile := unmanagedSourceDirectories.all(aggregateCompile).value.flatten,
@@ -36,7 +52,7 @@ lazy val aggregateCompile = ScopeFilter(
 lazy val commonSettings = Seq(
   organization         := "org.zalando",
   name                 := "grafter",
-  version in ThisBuild := "1.7.0"
+  version in ThisBuild := "2.0.1"
 )
 
 lazy val testSettings = Seq(

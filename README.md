@@ -10,18 +10,20 @@
 ## What's wrong with constructor injection again?
 
 There are [many](https://github.com/adamw/macwire) [libraries](https://github.com/google/guice) or [approaches](http://www.cakesolutions.net/teamblogs/2011/12/19/cake-pattern-in-depth) for doing [dependency injection](https://en.wikipedia.org/wiki/Dependency_injection) in Scala.
-Grafter goes back to the fundamentals of dependency injection by *just using constructor injection*: no reflection, no xml, no annotations (unless you want them as a little sugar), no inheritance or self-types.
+Grafter goes back to the fundamentals of dependency injection by *just using constructor injection*: no reflection, no xml, no implementation inheritance or self-types.
 
  - [Installation](doc/installation.md)
  - [Introduction](doc/introduction.md)
  - [Grafter Components](doc/components.md)
  - [Creating your first components](doc/creating.md)
+ - [In a library](doc/library.md)
  - [Remove boilerplate](doc/boilerplate.md)
  - [Use interfaces](doc/interfaces.md)
  - [Make singletons](doc/singletons.md)
  - [Start and Stop an application](doc/start-stop.md)
  - [Testing](doc/testing.md)
  - [Inspect the application graph](doc/inspect-app-graph.md)
+ - [A full application example](doc/fullapp.md)
 
 ---
 

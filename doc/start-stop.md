@@ -33,7 +33,6 @@ The major difference between the start and the stop strategies is that
 The `List[StopResult]` can be used to diagnose the shutdown and
 produce a nice error message if something went wrong.
 
-
 Wiring the application and starting is done, let's push to production. Or, should we do a bit of [testing](testing.md) first :-)?
 
 ----
