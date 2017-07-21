@@ -3,96 +3,53 @@ package org.zalando.grafter.macros
 import scala.annotation.StaticAnnotation
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox
+import ReaderMacros._
 
+/**
+ * This macro extracts all the fields of a component and builds a Reader[A, ComponentType] instance
+ * requiring an implicit reader instance for each field type
+ */
 object ReaderMacro {
+
+  val annotation = "reader"
 
   def impl(c: whitebox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
+    def name(t: Name) = t.decodedName.toString.trim
 
-    object TypeParamTraverser extends Traverser {
-      var types: List[c.universe.TypeName] = List[TypeName]()
-      override def traverse(tree: Tree): Unit = tree match {
-        case New(AppliedTypeTree(Ident(TypeName("reader")), typeIds)) =>
-          types = typeIds.collect {
-            case Ident(typeName: TypeName) => typeName
-          }
-        case _ => super.traverse(tree)
+    val (classTree, companionTree): (Tree, Option[Tree]) =
+      annotationInputs(c)(annotation)(annottees)
+
+    val genericTypeName = internal.reificationSupport.freshTypeName("A")
+    val ClassDef(_, className, _, Template(_, _, fields)) = c.typecheck(classTree)
+
+    val params = fieldsNamesAndTypes(c)(fields)
+
+    val implicitParameters = params
+      .map { case (fieldName, fieldType) =>
+        val readerName = TermName(name(fieldName)+"Reader")
+        c.Expr[ValDef](q"""$readerName: cats.data.Reader[$genericTypeName, $fieldType]""")
       }
+
+    val paramNames = params.map(_._1)
+    val readValues = paramNames.map { p => q"""val ${TermName("_"+name(p)+"Value")} = ${TermName(name(p)+"Reader")}.apply(r);""" }
+    val values     = paramNames.map { p => q"""${TermName("_"+name(p)+"Value")}""" }
+    val klassName  = name(className)
+
+    outputs(c)(classTree, className, companionTree) {
+      q"""
+         implicit def reader[$genericTypeName](implicit ..$implicitParameters): cats.data.Reader[$genericTypeName, $className] = {
+           cats.data.Reader { r =>
+             ..$readValues
+             new ${TypeName(klassName)}(...${List(values)})
+           }
+         }
+       """
     }
-
-    val inputs : (Tree, Tree, Option[Tree]) =
-      annottees.toList match {
-        case classDecl :: companion :: rest =>
-          (classDecl.tree, classDecl.tree, Option(companion.tree))
-
-        case classDecl :: rest =>
-          (classDecl.tree, classDecl.tree, None)
-
-        case Nil => c.abort(c.enclosingPosition, "no target")
-      }
-
-    val outputs: List[Tree] = {
-      val (original, ClassDef(_, className, _, Template(_, _, fields)), companion) = inputs
-
-
-      def params = fields.collect { case ValDef(mods, fieldName, fieldType, _) if mods.hasFlag(Flag.CASEACCESSOR) =>
-        (fieldName, fieldType)
-      }
-
-      val typeParam = {
-        TypeParamTraverser.traverse(c.macroApplication)
-        TypeParamTraverser.types.headOption.get
-      }
-
-      val klassName  = className.decodedName.toString
-      val implicits  = params.map { p => q"""private val ${TermName("_"+p._1)}: cats.data.Reader[$typeParam, ${p._2}] = implicitly[cats.data.Reader[$typeParam, ${p._2}]];""" }
-      val readValues = params.map(_._1).map { p => q"""val ${TermName("_"+p+"Value")} = ${TermName("_"+p)}.apply(r);""" }
-      val values     = List(params.map(_._1).map { p => q"""${TermName("_"+p+"Value")}""" })
-
-      val reader = {
-        TypeParamTraverser.traverse(c.macroApplication)
-        TypeParamTraverser.types.headOption.map { a =>
-          c.Expr[Any](
-              q"""
-               implicit val reader: cats.data.Reader[$typeParam, ${TypeName(klassName)}] = {
-                 cats.data.Reader { r =>
-                   ..$readValues
-                   new ${TypeName(klassName)}(...$values)
-                 }
-               }
-               """)
-          }
-          .getOrElse {
-            c.abort(c.enclosingPosition, "The @reader annotation requires a type parameter")
-          }
-      }
-
-      val companionObject = companion match {
-        case Some(q"""$mod object $companionName extends { ..$earlydefns } with ..$parents { ..$body }""") =>
-          q"""$mod object $companionName extends { ..$earlydefns } with ..$parents {
-           ..$body
-
-           ..$implicits
-
-           ..$reader
-           }"""
-
-        case None =>
-          q"""object ${TermName(className.decodedName.toString)} {
-           ..$implicits
-
-           ..$reader
-           }"""
-      }
-
-      original :: companionObject :: Nil
-    }
-
-    c.Expr[Any](Block(outputs, Literal(Constant(()))))
   }
 
 }
 
-class reader[A] extends StaticAnnotation {
+class reader extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro ReaderMacro.impl
 }

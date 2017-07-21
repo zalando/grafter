@@ -25,6 +25,12 @@ object Database {
 }
 ```
 
+This can even be generated with the `@defaultReader` annotation:
+```scala
+@defaultReader[PostgresDatabase]
+trait Database
+```
+
 The specific implementation is now isolated behind an interface but a problem still lies ahead. If several components require
 a database, the implicit resolution will create one fresh database instance for each dependency. This can be a serious
 problem if the `Database` components holds precious resources like a database connexions.

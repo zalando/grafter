@@ -49,9 +49,9 @@ case class ApplicationConfig(
 The `@readers` annotation creates an implicit `Reader` instance for each member of the `ApplicationConfig` class. With 
 this annotation the implicit resolution will find how to extract specific configuration data from the overall configuration.
 
-Then, for non-configuration components, like `HttpServer` we can also generate the `reader` code with a `@reader` annotation:
+Then, for non-configuration components, like `HttpServer` we can also generate the `reader` code with a `@readerOf` annotation:
 ```scala
-@reader[ApplicationConfig]
+@readerOf[ApplicationConfig]
 case class PostgresDatabase(dbConfig: DbConfig)
 ```
 
