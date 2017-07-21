@@ -1,9 +1,9 @@
 package org.zalando.grafter.macros
 
 import scala.annotation.StaticAnnotation
-import scala.language.experimental.macros
-import scala.reflect.macros.whitebox
+import scala.meta._
 import ReaderMacros._
+import ReaderOfMacro._
 
 /**
  * This macro extracts all the fields of a component and builds a Reader[A, ComponentType] instance
@@ -12,48 +12,43 @@ import ReaderMacros._
  */
 object ReaderOfMacro {
 
-  val annotation = "readerOf"
+  val annotationName = "readerOf"
 
-  def impl(c: whitebox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
-    import c.universe._
-    
-    def name(t: Name) = t.decodedName.toString.trim
+  def expand(classDef: Defn.Class, objectDef: Option[Defn.Object], typeParam: Type.Name): Term.Block = {
+    classDef.ctor.paramss.toList match {
+      case Nil =>
+        output(classDef, objectDef)()
 
-    val (classTree, companionTree): (Tree, Option[Tree]) =
-      annotationInputs(c)(annotation)(annottees)
+      case params :: _ =>
+        val parameters = collectParamTypesAndNamesAsList(params)
 
-    val ClassDef(_, className, _, Template(_, _, fields)) = c.typecheck(classTree)
+        val paramNames = parameters.map(_._2)
+        val implicits  = parameters.map { case (_type, p) => q"""private val ${Pat.Var.Term(Term.Name("_"+p.value+"Reader"))} = implicitly[cats.data.Reader[$typeParam, ${_type}]];""" }
+        val readValues = paramNames.map { p => q"""val ${Pat.Var.Term(Term.Name(p.value+"Value"))} = ${Term.Name("_"+p.value+"Reader")}.apply(r);""" }
+        val values     = paramNames.map { p => q"""${Term.Name(p.value+"Value")}""" }
 
-    val typeParam  = typeParameter(annotation)(c)
-    def params     = fieldsNamesAndTypes(c)(fields)
-    val paramNames = params.map(_._1).distinct
-    val implicits  = params.map { case (p, _type) => q"""private val ${TermName("_"+name(p))}: cats.data.Reader[$typeParam, ${_type}] = implicitly[cats.data.Reader[$typeParam, ${_type}]];""" }
-    val readValues = paramNames.map { p => q"""val ${TermName("_"+name(p)+"Value")} = ${TermName("_"+name(p))}.apply(r);""" }
-    val values     = paramNames.map { p => q"""${TermName("_"+name(p)+"Value")}""" }
-    val klassName  = name(className)
+        val reader =
+          q"""
+            implicit val reader: cats.data.Reader[$typeParam, ${classDef.name}] = {
+              cats.data.Reader { r =>
+                ..$readValues
+                ${Term.Name(classDef.name.value)}(...${List(values)})
+              }
+            }
+          """
 
-    val reader =
-      c.Expr[Any](
-        q"""
-             implicit val reader: cats.data.Reader[$typeParam, ${TypeName(klassName)}] = {
-               cats.data.Reader { r =>
-                 ..$readValues
-                 new ${TypeName(klassName)}(...${List(values)})
-               }
-             }
-             """)
+        output(classDef, objectDef)(implicits :+ reader:_*)
 
-    outputs(c)(classTree, className, companionTree) {
-      q"""
-         ..$implicits
-
-         ..$reader
-      """
     }
   }
 
 }
 
 class readerOf[A] extends StaticAnnotation {
-  def macroTransform(annottees: Any*): Any = macro ReaderOfMacro.impl
+
+  inline def apply(defn: Any): Any = meta {
+    val (classDef, objectDef) = annotatedClass(annotationName)(defn)
+    ReaderOfMacro.expand(classDef, objectDef, Type.Name(A.toString))
+  }
+
 }

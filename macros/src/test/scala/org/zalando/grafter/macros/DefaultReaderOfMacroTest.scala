@@ -2,9 +2,9 @@ package org.zalando.grafter.macros
 
 import cats.data._
 
-object DefaultReaderMacroTest {
+object DefaultReaderOfMacroTest {
 
-  @defaultReader[E1]
+  @defaultReaderOf[Config, E1]
   trait E
 
   case class E1() extends E
@@ -15,7 +15,7 @@ object DefaultReaderMacroTest {
 
   implicit val e1: Reader[Config, E1] = Reader(_ => E1())
 
-  val r1: Reader[Config, E] = E.reader[Config]
+  val r1: Reader[Config, E] = E.reader
 
 }
 

@@ -1,27 +1,19 @@
 package org.zalando.grafter.macros
 
 import scala.annotation.StaticAnnotation
-import scala.language.experimental.macros
-import scala.reflect.macros.whitebox
 import ReaderMacros._
+
+import scala.meta._
+import DefaultReaderMacro._
 
 object DefaultReaderMacro {
 
-  val annotation = "defaultReader"
+  val annotationName = "defaultReader"
 
-  def impl(c: whitebox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
-    import c.universe._
-
-    val (classTree, companionTree): (Tree, Option[Tree]) =
-      annotationInputs(c)(annotation)(annottees)
-
-    val ClassDef(_, className, _, _) = c.typecheck(classTree)
-    val genericTypeName = internal.reificationSupport.freshTypeName("A")
-    val typeParam = typeParameter(annotation)(c)
-
-    outputs(c)(classTree, className, companionTree) {
+  def expand(traitDef: Defn.Trait, objectDef: Option[Defn.Object], typeParam: Type.Name): Term.Block = {
+    output(traitDef, objectDef) {
       q"""
-         implicit def reader[$genericTypeName](implicit defaultReader: cats.data.Reader[$genericTypeName, $typeParam]): cats.data.Reader[$genericTypeName, $className] =
+         implicit def reader[A](implicit defaultReader: cats.data.Reader[A, $typeParam]): cats.data.Reader[A, ${traitDef.name}] =
            org.zalando.grafter.GenericReader.widenReader(defaultReader)
       """
     }
@@ -30,5 +22,10 @@ object DefaultReaderMacro {
 }
 
 class defaultReader[A] extends StaticAnnotation {
-  def macroTransform(annottees: Any*): Any = macro DefaultReaderMacro.impl
+
+  inline def apply(defn: Any): Any = meta {
+    val (traitDef, objectDef) = annotatedTrait(annotationName)(defn)
+    DefaultReaderMacro.expand(traitDef, objectDef, Type.Name(A.toString))
+  }
+
 }

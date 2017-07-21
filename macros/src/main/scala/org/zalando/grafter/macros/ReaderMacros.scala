@@ -1,91 +1,90 @@
 package org.zalando.grafter.macros
 
-import scala.reflect.macros.whitebox
+import scala.meta._
 
 object ReaderMacros {
 
   /** get the annotated class and, if available, companion object */
-  def annotationInputs(c: whitebox.Context)(name: String)(annottees: Seq[c.Expr[Any]]): (c.universe.Tree, Option[c.universe.Tree]) =
-    annottees.toList match {
-      case classDecl :: companion :: _ =>
-      (classDecl.tree, Option(companion.tree))
+  def annotatedClass(name: String)(annotated: Tree): (Defn.Class, Option[Defn.Object]) =
+    annotated match {
+      case block: Term.Block =>
+        block.stats.toList match {
+          case (classDef: Defn.Class) :: (companionDef: Defn.Object) :: _ =>
+            (classDef, Some(companionDef))
 
-      case classDecl :: _ =>
-      (classDecl.tree, None)
+          case _ =>
+            abort(s"the @$name annotation must annotate a class, no statements found")
+        }
 
-      case Nil => c.abort(c.enclosingPosition, s"the @$name annotation must annotate a class")
+      case classDef: Defn.Class =>
+        (classDef, None)
+
+      case other =>
+        abort(s"the @$name annotation must annotate a class, found $other")
     }
 
-  /**
-   * Inject an expression in the companion object of a class.
-   *
-   * Create one if necessary
-   */
-  def outputs(c: whitebox.Context)(
-    classTree: c.universe.Tree,
-    className: c.universe.TypeName,
-    companionTree: Option[c.universe.Tree])(expression: c.universe.Tree) = {
+  /** get the annotated trait and, if available, companion object */
+  def annotatedTrait(name: String)(annotated: Tree): (Defn.Trait, Option[Defn.Object]) =
+    annotated match {
+      case block: Term.Block =>
+        block.stats.toList match {
+          case (traitDef: Defn.Trait) :: (companionDef: Defn.Object) :: _ =>
+            (traitDef, Some(companionDef))
 
-    import c.universe._
+          case _ =>
+            abort(s"the @$name annotation must annotate a trait, no statements found")
+        }
 
-    val insert = c.Expr[Any](expression)
-    val out: List[Tree] = {
-      val companionObject = companionTree match {
-        case Some(q"""$mod object $companionName extends { ..$earlydefns } with ..$parents { ..$body }""") =>
-          q"""$mod object $companionName extends { ..$earlydefns } with ..$parents {
-           ..$body
-           ..$insert
-           }"""
+      case traitDef: Defn.Trait =>
+        (traitDef, None)
 
-        case None =>
-          q"""object ${TermName(className.decodedName.toString)} {
-           ..$insert
-           }"""
-      }
-
-      classTree :: companionObject :: Nil
+      case other =>
+        abort(s"the @$name annotation must annotate a trait, found $other")
     }
 
-    c.Expr[Any](q"..$out")
+  def output(classDef: Defn with Member.Type, objectDef: Option[Defn.Object])(out: Stat*): Term.Block  = {
+    val o = objectDef.getOrElse(q"object ${Term.Name(classDef.name.value)}")
+    val extendedObject = o.copy(templ = o.templ.copy(stats = o.templ.stats.map(_ ++ out.toList).orElse(Some(out.toList))))
+
+    q"""
+      $classDef
+      $extendedObject
+    """
   }
 
-  def fieldsNamesAndTypes(c: whitebox.Context)(fields: List[c.universe.Tree]): List[(c.universe.TermName, c.universe.Tree)] = {
-    import c.universe._
-    fields.collect { case ValDef(mods, fieldName, fieldType, _) if mods.hasFlag(Flag.CASEACCESSOR) =>
-      (fieldName, fieldType)
+  def collectParamTypesAndNames(params: Seq[Tree]): Map[Type.Name, Term.Name] =
+    collectParamTypesAndNamesAsList(params).groupBy(_._1.value).map {
+      case (typeName, termNames) => (Type.Name(typeName), termNames.head._2)
     }
+
+  def collectParamTypesAndNamesAsList(params: Seq[Tree]): List[(Type.Name, Term.Name)] =
+    params.toList.collect {
+      case param"$paramName: $paramType" =>
+        paramType match {
+          case Some(t: Type) =>
+            Option((Type.Name(t.syntax), Term.Name(paramName.syntax)))
+          case _ =>
+            None
+        }
+    }.flatten
+
+  def classAnnotationTypeParameter(name: String, classDef: Defn.Class): Type.Name = {
+    classDef.mods.collect {
+      case mod"@name[$t]" => Type.Name(t.syntax)
+      case _ => abort(s"The class ${classDef.name.value} must be annotated with @$name[T] where T is a specific type")
+    }.headOption.getOrElse(abort(s"No annotation $name found on class ${classDef.name.value}"))
   }
 
-  /**
-   * return field names and types so that only one field per given type is present
-   * For example if the fields are (server: ThreadPool, database: ThreadPool, port: Int)
-   * only (server: ThreadPool, port: Int) is returned
-   */
-  def removeDuplicatedTypes(c: whitebox.Context)(params: List[(c.universe.TermName, c.universe.Tree)]): List[(c.universe.TermName, c.universe.Tree)] =
-    params
-      .groupBy(_._2.tpe.typeSymbol.name.decodedName.toString)
-      .values.map(_.head).toList
+  def traitAnnotationTypeParameter(name: String, traitDef: Defn.Trait): Type.Name = {
+    traitDef.mods.collect {
+      case mod"@name[$t]" => Type.Name(t.syntax)
+      case _ => abort(s"The trait ${traitDef.name.value} must be annotated with @$name[T] where T is a specific type")
+    }.headOption.getOrElse(abort(s"No annotation $name found on trait ${traitDef.name.value}"))
+  }
 
-  /** extract the type parameter of an annotation */
-  def typeParameter(name: String)(c: whitebox.Context) = {
-    import c.universe._
-    val traverser = new Traverser {
-      var types: List[c.universe.TypeName] = List[TypeName]()
-
-      override def traverse(tree: Tree): Unit = tree match {
-        case New(AppliedTypeTree(Ident(TypeName(_)), typeIds)) =>
-          types = typeIds.collect {  case Ident(typeName: TypeName) => typeName }
-
-        case _ =>
-          super.traverse(tree)
-      }
-    }
-
-    traverser.traverse(c.macroApplication)
-    traverser.types.headOption match {
-      case Some(t) => t
-      case None    => c.abort(c.enclosingPosition, s"the @$name annotation requires a type parameter")
-    }
+  implicit class StringOps(s: String) {
+    def uncapitalize: String =
+      s.take(1).map(_.toLower)++s.drop(1)
   }
 
 }
