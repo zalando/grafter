@@ -16,6 +16,7 @@ Grafter goes back to the fundamentals of dependency injection by *just using con
  - [Introduction](doc/introduction.md)
  - [Grafter Components](doc/components.md)
  - [Creating your first components](doc/creating.md)
+ - [In a library](doc/library.md)
  - [Remove boilerplate](doc/boilerplate.md)
  - [Use interfaces](doc/interfaces.md)
  - [Make singletons](doc/singletons.md)
