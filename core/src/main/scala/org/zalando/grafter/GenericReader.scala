@@ -35,6 +35,15 @@ trait GenericReader {
   implicit def widenReader[R, A, B](r: Reader[R, A])(implicit ev: A <:< B): Reader[R, B] =
     r.map(a => ev(a))
 
+  /**
+   * compose 2 readers instances where their implicit instances are available
+   *
+   * This is particularly useful when some components define their configuration in a distinct
+   * library and you want to seamlessly extract that configuration from the application
+   * configuration. See the "In a library" page in the User Guide
+   */
+  def composeReaders[C, T, S](implicit s: Reader[T, S], t: Reader[C, T] ): Reader[C, S] =
+    t.map(t1 => s(t1))
 }
 
 object GenericReader extends GenericReader {
