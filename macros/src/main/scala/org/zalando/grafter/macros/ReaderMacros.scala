@@ -46,7 +46,7 @@ object ReaderMacros {
       classTree :: companionObject :: Nil
     }
 
-    c.Expr[Any](Block(out, Literal(Constant(()))))
+    c.Expr[Any](q"..$out")
   }
 
   def fieldsNamesAndTypes(c: whitebox.Context)(fields: List[c.universe.Tree]): List[(c.universe.TermName, c.universe.Tree)] = {
