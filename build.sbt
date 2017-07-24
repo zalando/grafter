@@ -36,6 +36,8 @@ lazy val rootSettings = Seq(
   libraryDependencies := libraryDependencies.all(aggregateCompile).value.flatten
 )
 
+enablePlugins(TutPlugin)
+
 lazy val aggregateCompile = ScopeFilter(
   inProjects(core, macros),
   inConfigurations(Compile))
