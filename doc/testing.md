@@ -5,7 +5,7 @@ at the frontier of your system and deeply embedded in your application.
 
 This is can be done once again with `Rewriter` and the `replace` method:
 
-```scala
+```tut
 import org.zalando.grafter._, Rewriter._
 
 object mockDb extends Database {

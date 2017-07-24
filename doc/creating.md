@@ -4,7 +4,7 @@
 The first component we create is the configuration of the application. 
 It is a `case class`, possibly containing other case classes. For the examples below we will use the following:
 
-```scala
+```tut
 case class ApplicationConfig(
   http: HttpConfig,
   db:   DbConfig
@@ -19,14 +19,14 @@ case class DbConfig(url: String)
 #### The next component
 
 Our next component is a `HttpServer`. It needs its own piece of configuration, `HttpConfig`:
-```scala
+```tut
 case class HttpServer(config: HttpConfig)
 ``` 
 
 How do we get an `HttpConfig` in the first place? 
 We can get it from an `ApplicationConfig` using a [`Reader` instance](http://eed3si9n.com/herding-cats/Reader.html):
 
-```scala
+```tut
 object HttpConfig {
   // the HttpConfig is extracted directly from the application config
   def reader: Reader[ApplicationConfig, HttpConfig] =
@@ -36,7 +36,7 @@ object HttpConfig {
 
 Then we can define an other `Reader` instance for `HttpServer` describing how to get a `HttpServer` from an `ApplicationConfig`:
 
-```scala
+```tut
 case class HttpServer(config: HttpConfig)
 
 import cats.data.Reader
@@ -64,7 +64,7 @@ Let's scale this up to a full application.
 The application is a top-level component, depending on the `HttpServer` and a new component, the `PostgresDatabase`, also having
 its own configuration:
 
-```scala
+```tut
 case class PostgresDatabase(dbConfig: DbConfig)
 
 object PostgresDatabase {
@@ -80,7 +80,7 @@ object DbConfig {
 
 Then the full application:
 
-```scala
+```tut
 case class Application(httpServer: HttpServer, db: PostgresDatabase)
 
 object Application {
@@ -97,7 +97,7 @@ object Application {
 
 Finally we create an instance of `ApplicationConfig` (we can deserialize this object from a file if necessary):
 
-```scala
+```tut
 val prod: ApplicationConfig = ApplicationConfig(
   http = HttpConfig("localhost", 8080),
   db   = DbConfig("jdbc:localhost/database")
@@ -106,7 +106,7 @@ val prod: ApplicationConfig = ApplicationConfig(
 
 And get our fully wired application:
 
-```scala
+```tut
 val application: Application =
   Application.reader.apply(prod)
 ```

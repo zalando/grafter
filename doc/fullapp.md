@@ -9,7 +9,7 @@ example which you can use as a template for your own applications:
 
 `Application.scala`
 
-```scala
+```tut
 import org.zalando.grafter.syntax.rewriter._
 
 object Application {
@@ -33,7 +33,7 @@ The flow from the code above shows that:
 
 `ApplicationComponents.scala`
 
-```scala
+```tut
 import org.zalando.grafter.macros._
 import org.zalando.grafter.syntax.rewriter._
 
@@ -56,7 +56,7 @@ The `singletons` and `modify` methods are both provided by the implicits in
 
 `ApplicationConfig.scala`
 
-```scala
+```tut
 import org.zalando.grafter.GenericReader
 import org.zalando.grafter.macros.readers
 
@@ -79,7 +79,7 @@ object ApplicationConfig extends GenericReader {
 
 `HttpServer.scala`
 
-```scala
+```tut
 import cats.Eval
 import org.zalando.grafter.{Start, StartResult}
 import org.zalando.grafter.macros.reader
@@ -96,7 +96,7 @@ case class HttpServerConfig(host: String, port: Int)
 
 `Database.scala`
 
-```scala
+```tut
 import cats.Eval
 import org.zalando.grafter.macros.defaultReader
 
@@ -113,7 +113,7 @@ with the `@defaultReader` annotation.
 
 `PostgresDatabase.scala`
 
-```scala
+```tut
 import cats.Eval
 import org.zalando.grafter._
 import org.zalando.grafter.macros.reader

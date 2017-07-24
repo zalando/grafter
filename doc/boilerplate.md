@@ -3,7 +3,7 @@
 Using `Reader` instances to define dependencies between components seems a bit over-engineered at first. But it is not, 
 Reader being a "Type class" we can use Scala implicit resolution and [shapeless](https://github.com/milessabin/shapeless)
 to define those instances for us:
-```scala
+```tut
 import org.zalando.grafter.GenericReader._
 import cats.data.Reader
 import cats.implicits._
@@ -36,7 +36,7 @@ object Application {
 
 The code above still looks a bit repetitive. Can it be automated? Absolutely, by using a macro annotation:
 
-```scala
+```tut
 import org.zalando.grafter.macros._
 
 @readers
@@ -50,7 +50,7 @@ The `@readers` annotation creates an implicit `Reader` instance for each member 
 this annotation the implicit resolution will find how to extract specific configuration data from the overall configuration.
 
 Then, for non-configuration components, like `HttpServer` we can also generate the `reader` code with a `@readerOf` annotation:
-```scala
+```tut
 @readerOf[ApplicationConfig]
 case class PostgresDatabase(dbConfig: DbConfig)
 ```

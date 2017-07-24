@@ -5,7 +5,7 @@ It might be necessary to inspect (or test) the results of modifications on your 
 
 For example you might want to collect all the distinct components of a given type:
 
-```scala
+```tut
 import org.zalando.grafter.syntax.query._
 
 val application = Application.prod.
@@ -18,7 +18,7 @@ val httpConfigs: List[HttpConfig] =
 ```
 
 You might also want to check what are all the components using a component of a given type:
-```scala
+```tut
 val application = Application.prod.
   singleton[ExecutionService]
 
@@ -33,7 +33,7 @@ val usersOfExecutionService: Map[ExecutionService, List[List[Any]]] =
 
 It is also very useful to be able to display a graph of your application with the `Visualize` functionality:
 
-```scala
+```tut
 import org.zalando.grafter.syntax.visualize._
 
 val application = Application.prod

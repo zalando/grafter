@@ -2,7 +2,7 @@
 
 The `HttpServer` presented earlier statically depends on the `ApplicationConfig`:
 
-```scala
+```tut
 object HttpServer {
   implicit def reader: Reader[ApplicationConfig, HttpServer] =
     genericReader
@@ -12,7 +12,7 @@ object HttpServer {
 If you are creating a library, you will probably want to avoid this. To do it, lets parameterize
 the `reader` function with some config of type `A`:
 
-```scala
+```tut
 object HttpServer {
   implicit def reader[A](implicit httpConfigReader: Reader[A, HttpConfig]): Reader[A, HttpServer] =
     genericReader
@@ -21,7 +21,7 @@ object HttpServer {
 
 This allows us to put the `HttpServer` into a reusable module and build it independently
 from the `ApplicationConfig`. The `reader` code boilerplate can also be removed with a `@reader` annotation:
-```scala
+```tut
 import org.zalando.grafter.macros._
 
 @reader
