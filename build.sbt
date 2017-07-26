@@ -27,7 +27,7 @@ lazy val macros = project.in(file("macros")).
   settings(
     compilationSettings ++
     Seq(scalacOptions in (Compile, console) ~= (_ filterNot (_ contains "paradise"))) ++ // macroparadise plugin doesn't work in repl yet.
-    Seq(libraryDependencies += "org.scalameta" %% "scalameta" % "1.8.0" % Provided) ++
+    Seq(libraryDependencies += "org.scalameta" %% "scalameta" % "1.8.0") ++
     macroAnnotationSettings ++
     Seq(publishArtifact := false)
   ).dependsOn(core)
@@ -52,7 +52,7 @@ lazy val aggregateCompile = ScopeFilter(
 lazy val commonSettings = Seq(
   organization         := "org.zalando",
   name                 := "grafter",
-  version in ThisBuild := "2.0.1"
+  version in ThisBuild := "2.0.2"
 )
 
 lazy val testSettings = Seq(

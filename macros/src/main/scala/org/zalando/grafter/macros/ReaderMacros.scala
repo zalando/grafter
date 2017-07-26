@@ -12,9 +12,6 @@ object ReaderMacros {
           case (classDef: Defn.Class) :: (companionDef: Defn.Object) :: _ =>
             (classDef, Some(companionDef))
 
-          case (classDef: Defn.Class) :: _ =>
-            (classDef, None)
-
           case _ =>
             abort(s"the @$name annotation must annotate a class, no statements found")
         }
@@ -33,9 +30,6 @@ object ReaderMacros {
         block.stats.toList match {
           case (traitDef: Defn.Trait) :: (companionDef: Defn.Object) :: _ =>
             (traitDef, Some(companionDef))
-
-          case (traitDef: Defn.Trait) :: _ =>
-            (traitDef, None)
 
           case _ =>
             abort(s"the @$name annotation must annotate a trait, no statements found")
