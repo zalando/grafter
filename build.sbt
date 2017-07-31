@@ -3,7 +3,6 @@ import sbt._
 import com.ambiata._
 
 lazy val grafter = (project in file(".")).
-//  enablePlugins(TutPlugin).
   settings(
     rootSettings ++
     compilationSettings ++
