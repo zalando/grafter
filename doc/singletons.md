@@ -5,7 +5,7 @@ always use, in this case, one database, even if two different components
 depend on it. This is done with the `Rewriter` object, whose operations are
 enabled with the following `import`:
 
-```tut
+```tut:silent:fail
 import org.zalando.grafter.syntax.rewriter._
 ```
 
@@ -13,7 +13,7 @@ We can then call the `singletons` method on our application object to
 effectively rewrite the component tree and remove the duplicated objects.
 The following code shows three different ways of doing this:
 
-```tut
+```tut:silent:fail
 val app1: Application =
   application.singleton[Database]
   
@@ -32,7 +32,7 @@ trait with the `singletons` method ([Kiama](https://bitbucket.org/inkytonik/kiam
 It will also _not_ make singletons for `case class`es that extend `AnyVal` or that are marked as `final`. 
 This allows `case class`es representing `String` or `Int` parameters (i.e. _value classes_) to _not_ be turned into singletons.
 
-```tut
+```tut:silent
 // instances of these classes will fortunately not
 // be made singletons (otherwise everything will have the same port!)
 case class Port(value: Int) extends AnyVal
@@ -44,7 +44,7 @@ case class DbUrl(value: String) extends AnyVal
 Singletons are made based on the class name of a component, not its full type. This means that you
 could have runtime exceptions if you had parametrized components
 
-```tut
+```tut:silent:nofail
 case class C[T](t: T)
 
 case class App(c1: C[String], c2: C[Int])
@@ -60,7 +60,7 @@ to `c2` which would be incorrect.
 
 Most components in a application should be made singletons but not all. For example you might want to have 2 execution
 contexts with different configurations. Tree rewriting can also be used to that effect with the `modifyWith` and `replace` methods:
-```tut
+```tut:silent:fail
 import org.zalando.grafter.syntax.rewriter._
 
 val app: Application = 

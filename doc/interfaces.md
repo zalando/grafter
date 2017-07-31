@@ -5,7 +5,7 @@ directly depends on a `PostgresDatabase`. What if we want to use another databas
 
 One way to mitigate the impact of changes in software is to use interfaces between components: 
 
-```tut
+```tut:silent:nofail
 @reader
 case class Application(httpServer: HttpServer, db: Database)
 
@@ -18,7 +18,7 @@ case class PostgresDatabase(dbConfig: DbConfig) extends Database
 Now `Application` depends on `Database` which is just an interface. But how do we get an instance of a `Database`? Which 
 implementation should be picked by the implicit resolution? There is no magic here, we have to explicitly define the 
 required instance:
-```tut
+```tut:silent:fail
 object Database {
   implicit def reader: Reader[ApplicationConfig, Database] =
     PostgresDatabase.reader
@@ -26,7 +26,7 @@ object Database {
 ```
 
 This can even be generated with the `@defaultReader` annotation:
-```tut
+```tut:silent:fail
 @defaultReader[PostgresDatabase]
 trait Database
 ```
