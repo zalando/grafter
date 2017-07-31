@@ -29,6 +29,13 @@ object ReadersMacroTest {
 trait T1
 trait T2
 
+// edge cases
+@readers
+class AppConfig0
+
+@readers
+case class AppConfig1()
+
 @readers
 case class AppConfig(c1: C1, c21: C2, c22: C2)
 

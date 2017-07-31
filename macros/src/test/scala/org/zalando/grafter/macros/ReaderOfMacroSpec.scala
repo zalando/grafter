@@ -1,14 +1,14 @@
 package org.zalando.grafter.macros
 
 import org.specs2.Specification
+import org.specs2.matcher._
+import org.specs2.execute._
+import Typecheck._
 
-object ReaderOfMacroTest {
-  val r1: cats.data.Reader[ApplicationConfig, C] = C.reader
-}
-
-class ReaderOfMacroSpec extends Specification { def is = s2"""
+class ReaderOfMacroSpec extends Specification with TypecheckMatchers { def is = s2"""
 
  the reader annotation can be used to declare a reader for a given config type $useAnnotation
+ an annotation not placed on a class must not compile $compilationError
 
 """
 
@@ -16,6 +16,18 @@ class ReaderOfMacroSpec extends Specification { def is = s2"""
     R1.reader.apply(ApplicationConfig()).r3.r4.s ==== "hello"
   }
 
+  def compilationError = {
+    tc"""
+       @readerOf[String]
+       object O
+
+    """ must failWith("the @readerOf annotation must annotate a class, found object O")
+  }
+
+}
+
+object ReaderOfMacroTest {
+  val r1: cats.data.Reader[ApplicationConfig, C] = C.reader
 }
 
 case class ApplicationConfig()
