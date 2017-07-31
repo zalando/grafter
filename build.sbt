@@ -3,13 +3,16 @@ import sbt._
 import com.ambiata._
 
 lazy val grafter = (project in file(".")).
-  enablePlugins(TutPlugin).
+//  enablePlugins(TutPlugin).
   settings(
     rootSettings ++
     compilationSettings ++
     commonSettings      ++
     publishSettings
   ).aggregate(core, macros)
+
+enablePlugins(TutPlugin)
+tutSourceDirectory := file("doc")
 
 lazy val core = (project in file("core")).
   enablePlugins(TutPlugin).
