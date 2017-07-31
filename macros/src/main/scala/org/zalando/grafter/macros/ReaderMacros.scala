@@ -68,20 +68,6 @@ object ReaderMacros {
         }
     }.flatten
 
-  def classAnnotationTypeParameter(name: String, classDef: Defn.Class): Type.Name = {
-    classDef.mods.collect {
-      case mod"@name[$t]" => Type.Name(t.syntax)
-      case _ => abort(s"The class ${classDef.name.value} must be annotated with @$name[T] where T is a specific type")
-    }.headOption.getOrElse(abort(s"No annotation $name found on class ${classDef.name.value}"))
-  }
-
-  def traitAnnotationTypeParameter(name: String, traitDef: Defn.Trait): Type.Name = {
-    traitDef.mods.collect {
-      case mod"@name[$t]" => Type.Name(t.syntax)
-      case _ => abort(s"The trait ${traitDef.name.value} must be annotated with @$name[T] where T is a specific type")
-    }.headOption.getOrElse(abort(s"No annotation $name found on trait ${traitDef.name.value}"))
-  }
-
   implicit class StringOps(s: String) {
     def uncapitalize: String =
       s.take(1).map(_.toLower)++s.drop(1)

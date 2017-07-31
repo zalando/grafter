@@ -12,7 +12,7 @@ your code. If you decide to use them, you need to add the following scala
 compiler plugin to your sbt build:
 
 ```scala
-addCompilerPlugin("org.scalameta" % "paradise" % "3.0.0-M8" cross CrossVersion.full)
+addCompilerPlugin("org.scalameta" % "paradise" % "3.0.0-M9" cross CrossVersion.full)
 
 libraryDependencies += "org.scalameta" %% "contrib" % "1.8.0"
 ```

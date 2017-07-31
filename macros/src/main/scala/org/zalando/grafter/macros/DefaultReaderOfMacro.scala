@@ -4,7 +4,7 @@ import scala.annotation.StaticAnnotation
 import ReaderMacros._
 
 import scala.meta._
-import DefaultReaderMacro._
+import DefaultReaderMacroOf._
 
 object DefaultReaderMacroOf {
 
