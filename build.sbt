@@ -3,6 +3,7 @@ import sbt._
 import com.ambiata._
 
 lazy val grafter = (project in file(".")).
+  enablePlugins(TutPlugin).
   settings(
     rootSettings ++
     compilationSettings ++
@@ -11,6 +12,7 @@ lazy val grafter = (project in file(".")).
   ).aggregate(core, macros)
 
 lazy val core = (project in file("core")).
+  enablePlugins(TutPlugin).
   settings(
     compilationSettings ++
     testSettings ++
@@ -35,9 +37,6 @@ lazy val rootSettings = Seq(
   sources in Compile  := sources.all(aggregateCompile).value.flatten,
   libraryDependencies := libraryDependencies.all(aggregateCompile).value.flatten
 )
-
-lazy val doc = (project in file("doc"))
-    .enablePlugins(TutPlugin)
 
 lazy val aggregateCompile = ScopeFilter(
   inProjects(core, macros),
