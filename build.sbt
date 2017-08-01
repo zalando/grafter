@@ -31,7 +31,6 @@ lazy val macros = project.in(file("macros")).
     compilationSettings ++
     Seq(scalacOptions in (Compile, console) ~= (_ filterNot (_ contains "paradise"))) ++ // macroparadise plugin doesn't work in repl yet.
     Seq(libraryDependencies ++= Seq(
-      "org.scalameta" %% "scalameta" % "2.0.0-M1",
       "org.scalamacros" %% "scalamacros" % "2.0.0-96-9f738df2")) ++
     macroAnnotationSettings ++
     Seq(publishArtifact := false)

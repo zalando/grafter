@@ -1,12 +1,11 @@
 package org.zalando.grafter.macros
 
 import ReaderMacros._
+import scala.macros._
 
 object ReadersMacro {
-  import scala.meta._
 
-  def expand(classDef: Defn.Class, objectDef: Option[Defn.Object]): Term.Block = {
-
+  def expand(classDef: Defn.Class, objectDef: Option[Defn.Object]): Term = {
     classDef match {
       case Defn.Class(_, className, _, Ctor.Primary(_, _, paramss), _) =>
         paramss match {
@@ -37,15 +36,6 @@ object ReadersMacro {
       }
 
     }
-  }
-
-}
-
-class readers extends scala.macros.MacroAnnotation {
-
-  def apply(defn: Any): Any = macro {
-    val (classDef, objectDef) = annotatedClass("readers")(defn)
-    ReadersMacro.expand(classDef, objectDef).asInstanceOf[scala.macros.Term]
   }
 
 }
