@@ -5,10 +5,11 @@ import scala.meta._
 object ReaderMacros {
 
   /** get the annotated class and, if available, companion object */
-  def annotatedClass(name: String)(annotated: Tree): (Defn.Class, Option[Defn.Object]) =
+  def annotatedClass(name: String)(annotated: Any): (Defn.Class, Option[Defn.Object]) = {
+
     annotated match {
       case block: Term.Block =>
-        block.stats.toList match {
+        block.stats match {
           case (classDef: Defn.Class) :: (companionDef: Defn.Object) :: _ =>
             (classDef, Some(companionDef))
 
@@ -22,12 +23,13 @@ object ReaderMacros {
       case other =>
         abort(s"the @$name annotation must annotate a class, found $other")
     }
+  }
 
   /** get the annotated trait and, if available, companion object */
   def annotatedTrait(name: String)(annotated: Tree): (Defn.Trait, Option[Defn.Object]) =
     annotated match {
       case block: Term.Block =>
-        block.stats.toList match {
+        block.stats match {
           case (traitDef: Defn.Trait) :: (companionDef: Defn.Object) :: _ =>
             (traitDef, Some(companionDef))
 
@@ -44,7 +46,7 @@ object ReaderMacros {
 
   def output(classDef: Defn with Member.Type, objectDef: Option[Defn.Object])(out: Stat*): Term.Block  = {
     val o = objectDef.getOrElse(q"object ${Term.Name(classDef.name.value)}")
-    val extendedObject = o.copy(templ = o.templ.copy(stats = o.templ.stats.map(_ ++ out.toList).orElse(Some(out.toList))))
+    val extendedObject = o.copy(templ = o.templ.copy(stats = o.templ.stats ++ out.toList))
 
     q"""
       $classDef
@@ -73,4 +75,6 @@ object ReaderMacros {
       s.take(1).map(_.toLower)++s.drop(1)
   }
 
+  def abort(message: String) =
+    throw new scala.macros.internal.AbortMacroException(scala.macros.Position.None, message)
 }

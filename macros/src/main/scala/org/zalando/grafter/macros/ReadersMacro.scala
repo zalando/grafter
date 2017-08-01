@@ -1,21 +1,20 @@
 package org.zalando.grafter.macros
 
-import scala.meta._
-import scala.annotation.StaticAnnotation
 import ReaderMacros._
 
 object ReadersMacro {
+  import scala.meta._
 
   def expand(classDef: Defn.Class, objectDef: Option[Defn.Object]): Term.Block = {
 
     classDef match {
       case Defn.Class(_, className, _, Ctor.Primary(_, _, paramss), _) =>
-        paramss.toList match {
+        paramss match {
           case params :: _ =>
             val implicitReaders =
               collectParamTypesAndNames(params).toList.map {
                 case (paramType, paramName) =>
-                  val readerName = Pat.Var.Term(Term.Name(paramName.syntax + "Reader"))
+                  val readerName = Pat.Var(Term.Name(paramName.syntax + "Reader"))
 
                   q"""
                   implicit val $readerName: cats.data.Reader[$className, $paramType] =
@@ -26,7 +25,7 @@ object ReadersMacro {
         def readerIdentity =
 
             q"""
-                implicit val ${Pat.Var.Term(Term.Name(className.syntax.uncapitalize+"Reader"))}: cats.data.Reader[$className, $className] ={
+                implicit val ${Pat.Var(Term.Name(className.syntax.uncapitalize+"Reader"))}: cats.data.Reader[$className, $className] ={
                   cats.data.Reader(identity)
              }
           """
@@ -42,11 +41,11 @@ object ReadersMacro {
 
 }
 
-class readers extends StaticAnnotation {
+class readers extends scala.macros.MacroAnnotation {
 
-  inline def apply(defn: Any): Any = meta {
+  def apply(defn: Any): Any = macro {
     val (classDef, objectDef) = annotatedClass("readers")(defn)
-    ReadersMacro.expand(classDef, objectDef)
+    ReadersMacro.expand(classDef, objectDef).asInstanceOf[scala.macros.Term]
   }
 
 }

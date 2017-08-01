@@ -19,15 +19,20 @@ lazy val core = (project in file("core")).
   )
 
 lazy val macroAnnotationSettings = Seq(
-  addCompilerPlugin("org.scalameta" % "paradise" % "3.0.0-M9" cross CrossVersion.full),
-  scalacOptions += "-Xplugin-require:macroparadise"
+  resolvers += Resolver.bintrayRepo("scalamacros", "maven"),
+  libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+  addCompilerPlugin("org.scalamacros" %% "paradise" % "2.1.0" cross CrossVersion.full),
+  addCompilerPlugin("org.scalamacros" % "scalac-plugin" % "2.0.0-96-9f738df2" cross CrossVersion.full)
+
 )
 
 lazy val macros = project.in(file("macros")).
   settings(
     compilationSettings ++
     Seq(scalacOptions in (Compile, console) ~= (_ filterNot (_ contains "paradise"))) ++ // macroparadise plugin doesn't work in repl yet.
-    Seq(libraryDependencies += "org.scalameta" %% "scalameta" % "1.8.0") ++
+    Seq(libraryDependencies ++= Seq(
+      "org.scalameta" %% "scalameta" % "2.0.0-M1",
+      "org.scalamacros" %% "scalamacros" % "2.0.0-96-9f738df2")) ++
     macroAnnotationSettings ++
     Seq(publishArtifact := false)
   ).dependsOn(core)
@@ -64,14 +69,13 @@ lazy val testSettings = Seq(
 )
 
 lazy val compilationSettings = Seq(
-  scalaVersion := "2.12.2",
-  crossScalaVersions := Seq("2.11.11", scalaVersion.value),
-  ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) },
+  scalaVersion := "2.12.3",
+  crossScalaVersions := Seq(scalaVersion.value),
   scalacOptions ++= Seq(
     "-unchecked",
     "-feature",
     "-deprecation:false",
-    "-Xfatal-warnings",
+    //"-Xfatal-warnings",
     "-Xcheckinit",
     "-Xlint",
     "-Xlint:-nullary-unit",
