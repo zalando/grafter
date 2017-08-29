@@ -4,7 +4,7 @@ import com.ambiata._
 
 lazy val grafter = (project in file(".")).
   settings(
-    rootSettings ++
+    rootSettings        ++
     compilationSettings ++
     commonSettings      ++
     publishSettings
@@ -30,20 +30,37 @@ lazy val examples = (project in file("examples")).
       Seq(publishArtifact := false)
   ).dependsOn(core, macros)
 
+lazy val tests = (project in file("tests")).
+  settings(
+    compilationSettings ++
+      testSettings ++
+      Seq(publishArtifact := false)
+  ).dependsOn(core, core % "test->test", macros)
+
 lazy val rootSettings = Seq(
   unmanagedSourceDirectories in Compile := unmanagedSourceDirectories.all(aggregateCompile).value.flatten,
-  sources in Compile  := sources.all(aggregateCompile).value.flatten,
-  libraryDependencies := libraryDependencies.all(aggregateCompile).value.flatten
+  unmanagedSourceDirectories in Test    := unmanagedSourceDirectories.all(aggregateTest).value.flatten,
+  sources in Compile                    := sources.all(aggregateCompile).value.flatten,
+  sources in Test                       := sources.all(aggregateTest).value.flatten,
+  mappings in (Test, packageBin)        ~= (_.filter(mappingFilter)),
+  libraryDependencies                   := libraryDependencies.all(aggregateCompile).value.flatten
 )
+
+def mappingFilter(mapping: (File, String)): Boolean =
+  mapping._1.getPath.contains("org/zalando/grafter/specs2")
 
 lazy val aggregateCompile = ScopeFilter(
   inProjects(core, macros),
   inConfigurations(Compile))
 
+lazy val aggregateTest = ScopeFilter(
+  inProjects(core, macros, tests, examples),
+  inConfigurations(Test))
+
 lazy val commonSettings = Seq(
   organization         := "org.zalando",
   name                 := "grafter",
-  version in ThisBuild := "2.1.0"
+  version in ThisBuild := "2.1.1"
 )
 
 lazy val testSettings = Seq(
@@ -55,7 +72,7 @@ lazy val testSettings = Seq(
 )
 
 lazy val compilationSettings = Seq(
-  scalaVersion := "2.12.2",
+  scalaVersion := "2.12.3",
   crossScalaVersions := Seq("2.11.11", scalaVersion.value),
   addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
   scalacOptions ++= Seq(
@@ -94,7 +111,9 @@ lazy val publishSettings = Seq(
       </developer>
     </developers>
   ),
-  publishArtifact in Test := false
+  publishArtifact in (Test, packageBin) := true,
+  publishArtifact in (Test, packageDoc) := true,
+  publishArtifact in (Test, packageSrc) := true
 ) ++
   credentialSettings ++
   promulgateVersionSettings
@@ -106,3 +125,8 @@ lazy val credentialSettings = Seq(
     password <- Option(System.getenv().get("SONATYPE_PASSWORD"))
   } yield Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", username, password)).toSeq
 )
+
+shellPrompt in ThisBuild := { state =>
+  val name = Project.extract(state).currentRef.project
+  (if (name == "grafter") "" else name) + "> "
+}
