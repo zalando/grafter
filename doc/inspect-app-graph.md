@@ -63,5 +63,37 @@ application.asDotString ====
 
 ![webgraphviz](webgraphviz-example.png)
 
+### With specs2
+
+If you use [**specs2**](http://specs2.org) you can use the `org.zalando.grafter.specs2.matcher.ComponentsMatchers` trait
+to check the number of components of a given type in your application:
+```scala
+import org.zalando.grafter.specs2.matcher._
+import org.specs2.Specification
+
+class ApplicationSpec extends Specification with ComponentsMatchers { def is = s2"""
+
+  The application contains the right number of components $checkApplication
+
+"""
+
+  val application = Application()
+
+  def checkApplication = {
+    application must containInstances(
+      classOf[Service1] -> 1,
+      classOf[Service2] -> 1,
+      classOf[Service3] -> 2
+    )
+  }
+
+}
+
+case class Application(service1: Service1 = Service1(), service2: Service2 = Service2())
+case class Service1(service3: Service3 = Service3())
+case class Service2(service3: Service3 = Service3())
+case class Service3()
+``` 
+
 ----
 Previous: [Testing](testing.md)
