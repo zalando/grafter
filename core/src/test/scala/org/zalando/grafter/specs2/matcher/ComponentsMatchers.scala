@@ -17,8 +17,11 @@ trait ComponentsMatchers {
 
 case class ContainsInstancesMatcher[T <: Product](expected: List[(Class[_], Int)]) extends Matcher[T] {
 
+  private val expectedCountSimpleNames: List[(String, Int)] =
+    expected.map(_.leftMap(_.getSimpleName))
+
   private val expectedCount: List[(String, Int)] =
-    expected.map(_.leftMap(_.getSimpleName)).sortBy(_._1)
+    expectedCountSimpleNames.sortBy(_._1)
 
   def apply[S <: T](expectable: Expectable[S]): MatchResult[S] = {
     val components = expectable.value
