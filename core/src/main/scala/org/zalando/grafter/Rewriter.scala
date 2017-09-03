@@ -1,6 +1,7 @@
 package org.zalando.grafter
 
 import java.lang.reflect.Modifier
+
 import cats.Eval
 import org.bitbucket.inkytonik.kiama.rewriting.{MemoRewriter, Rewritable, Strategy}
 
@@ -32,10 +33,22 @@ trait Rewriter {
     singletons[G]((_: Any) => true)(graph)
 
   /**
-    * Make singletons of all components
-    */
+   * Make singletons of all components, except the ones
+   * not accepted by the predicate
+   */
   def singletons[G](predicate: Any => Boolean)(graph: G): G =
-    rewrite(everywherebu(singletonsStrategy(predicate)))(graph)
+    singletonsBy {
+      case a if predicate(a) => a.getClass.getName
+      case other             => System.identityHashCode(other)
+    }(graph)
+
+  /**
+    * Make singletons of all components, based
+    * on the class name of the component by default and
+    * on the class name + the result of the by function
+    */
+  def singletonsBy[G](by: PartialFunction[Any, Any], bys: PartialFunction[Any, Any]*)(graph: G): G =
+    rewrite(everywherebu(singletonsByStrategy(by, bys:_*)))(graph)
 
   /**
     * Replace all values of type S, with the same value
@@ -54,7 +67,6 @@ trait Rewriter {
     */
   def rewriteWithStrategy[G](strategy: Strategy, graph: G): G =
     rewrite(everywheretd(strategy))(graph)
-
   /**
     * Replace with a given strategy (breadth first)
     */
@@ -99,20 +111,27 @@ trait Rewriter {
     }
   }
 
-  def singletonsStrategy(predicate: Any => Boolean): Strategy = {
-    val singletons: scala.collection.mutable.HashMap[String, Any] =
-      new scala.collection.mutable.HashMap[String, Any]
+  def singletonsByStrategy(by: PartialFunction[Any, Any], bys: PartialFunction[Any, Any]*): Strategy = {
+    val singletons: scala.collection.mutable.HashMap[Any, Any] =
+      new scala.collection.mutable.HashMap[Any, Any]
+
+    val discriminate = bys.foldLeft(by)(_ orElse _).lift
 
     strategy[Any] {
-      case v if predicate(v) && canBeSingleton(v) =>
+      case v if canBeSingleton(v) =>
         val className = v.getClass.getName
+        val key =
+          discriminate(v) match {
+            case Some(discriminant) => (className, discriminant)
+            case None               => className
+          }
 
-        singletons.get(className) match {
+        singletons.get(key) match {
           case Some(s) =>
             Some(s)
 
           case None =>
-            singletons.put(className, v)
+            singletons.put(key, v)
             Some(v)
         }
     }
@@ -221,6 +240,9 @@ trait RewriterSyntax {
     def singletons(predicate: Any => Boolean): G =
       Rewriter.singletons(predicate)(graph)
 
+    def singletonsBy(by: PartialFunction[Any, Any], bys: PartialFunction[Any, Any]*): G =
+      Rewriter.singletonsBy(by, bys:_*)(graph)
+
     def replace[S : ClassTag](s: S): G =
       Rewriter.replace[S, G](s, graph)
 
@@ -261,4 +283,5 @@ private object GrafterMemoRewriter extends MemoRewriter {
         s
     }
   }
+
 }
