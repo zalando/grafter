@@ -10,7 +10,7 @@ class VisualizeSpec extends Specification with ThrownExpectations { def is = s2"
 
  The example graph must be correctly serialized into .dot format $s1
  A package filter can be used to only keep specified classes in the resulting graph $s2
-
+ AnyVals must not appear in the visualization $s3
 """
   import Graph._
 
@@ -59,6 +59,20 @@ class VisualizeSpec extends Specification with ThrownExpectations { def is = s2"
           |}""".stripMargin
   }
 
+  def s3 = {
+
+    val app = F(A(), G("name"))
+
+    val dot = app.asDotString
+
+    dot ====
+      s"""|strict digraph {
+          |  "A" [shape=box];
+          |  "F" [shape=box];
+          |  "F" -> "A"
+          |}""".stripMargin
+  }
+
 }
 
 object Graph {
@@ -67,6 +81,8 @@ object Graph {
   case class B(a: A)
   case class C(a: A, b1: B, b2: B)
   case class D(c1: C, c2: C)
-
   case class E(a: A, foo: Foo)
+  case class F(a: A, g: G)
+  case class G(name: String) extends AnyVal
+
 }
