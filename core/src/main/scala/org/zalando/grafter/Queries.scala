@@ -1,5 +1,7 @@
 package org.zalando.grafter
 
+import java.lang.reflect.Modifier
+
 import org.bitbucket.inkytonik.kiama.rewriting.MemoRewriter._
 
 import scala.collection.mutable.ListBuffer
@@ -72,7 +74,18 @@ trait Query {
   }
 
   def relation[G <: Product](graph: G, filter: Product => Boolean = (_:Product) => true): Relation[Product, Product] =
-    Relation.fromOneStep(graph, g => TreeRelation.treeChildren(g).filter(filter))
+    Relation.fromOneStep(graph, g => TreeRelation.treeChildren(g).filterNot(isAnyVal).filter(filter))
+
+
+  private def isAnyVal[T](t: T): Boolean = {
+    val klass = t.getClass
+    t match {
+      case p: Product if Modifier.isFinal(klass.getModifiers) && p.productArity == 1 =>
+        true
+      case _ =>
+        false
+    }
+  }
 
 }
 
