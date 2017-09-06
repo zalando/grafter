@@ -40,28 +40,41 @@ val application = Application.prod
 
 application.asDotString ====
       s"""|strict digraph {
-          |  "A" [shape=box];
-          |  "B # 1/2" [shape=box];
-          |  "B # 2/2" [shape=box];
-          |  "C # 1/2" [shape=box];
-          |  "C # 2/2" [shape=box];
-          |  "D" [shape=box];
-          |  "B # 1/2" -> "A"
-          |  "B # 2/2" -> "A"
-          |  "C # 1/2" -> "A"
-          |  "C # 1/2" -> "B # 1/2"
-          |  "C # 1/2" -> "B # 2/2"
-          |  "C # 2/2" -> "A"
-          |  "C # 2/2" -> "B # 1/2"
-          |  "C # 2/2" -> "B # 2/2"
-          |  "D" -> "C # 1/2"
-          |  "D" -> "C # 2/2"
+          |  node [shape=record] 
+          |  "A";
+          |  "B # 1/2";
+          |  "B # 2/2";
+          |  "C # 1/2";
+          |  "C # 2/2";
+          |  "D";
+          |  "B # 1/2" -> "A";
+          |  "B # 2/2" -> "A";
+          |  "C # 1/2" -> "A";
+          |  "C # 1/2" -> "B # 1/2";
+          |  "C # 1/2" -> "B # 2/2";
+          |  "C # 2/2" -> "A";
+          |  "C # 2/2" -> "B # 1/2";
+          |  "C # 2/2" -> "B # 2/2";
+          |  "D" -> "C # 1/2";
+          |  "D" -> "C # 2/2";
           |}""".stripMargin 
 ```
 
 `asDotString` produces a `.dot` graph which you can visualize with [webgraphviz](http://www.webgraphviz.com) or similar tools
 
 ![webgraphviz](webgraphviz-example.png)
+
+#### Configuration
+
+You can configure the generation of the `dot` graph by passing to the `asDotString` method:
+
+ - `filter: Product => Boolean` to describe which nodes should be kept (by default everything is kept)
+ - `display: NodeDisplay(summary, attributesFilter)` to show more details for a given node
+     - `summary: Product => Option[String]`. This function can be used to return a "summary" of a node to be displayed in a 
+        box below the node name. The default is `_ => None`.
+
+     - `attributesFilter: Any => Option[Any]`. If `summary` doesn't return a result, this function is called for every
+        of the product attributes. By default only "primitive" values (`String`, `Int`, `AnyVal`,...) values are being shown
 
 ### With specs2
 

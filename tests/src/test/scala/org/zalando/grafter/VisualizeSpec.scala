@@ -3,6 +3,7 @@ package org.zalando.grafter
 import org.specs2.Specification
 import org.specs2.execute.Result
 import org.specs2.matcher.ThrownExpectations
+import org.zalando.grafter.Visualize._
 import org.zalando.grafter.visualize.Foo
 import org.zalando.grafter.syntax.visualize._
 
@@ -10,7 +11,12 @@ class VisualizeSpec extends Specification with ThrownExpectations { def is = s2"
 
  The example graph must be correctly serialized into .dot format $s1
  A package filter can be used to only keep specified classes in the resulting graph $s2
- AnyVals must not appear in the visualization $s3
+
+ Nodes can display more details
+   with their attributes  $s3
+   or with a node summary $s4
+   or not at all          $s5
+
 """
   import Graph._
 
@@ -23,24 +29,25 @@ class VisualizeSpec extends Specification with ThrownExpectations { def is = s2"
     val c2 = C(a, b1, b2)
     val app = D(c1, c2)
 
-    app.asDotString ====
+    app.asDotString(display = None) ====
       s"""|strict digraph {
-          |  "A" [shape=box];
-          |  "B # 1/2" [shape=box];
-          |  "B # 2/2" [shape=box];
-          |  "C # 1/2" [shape=box];
-          |  "C # 2/2" [shape=box];
-          |  "D" [shape=box];
-          |  "B # 1/2" -> "A"
-          |  "B # 2/2" -> "A"
-          |  "C # 1/2" -> "A"
-          |  "C # 1/2" -> "B # 1/2"
-          |  "C # 1/2" -> "B # 2/2"
-          |  "C # 2/2" -> "A"
-          |  "C # 2/2" -> "B # 1/2"
-          |  "C # 2/2" -> "B # 2/2"
-          |  "D" -> "C # 1/2"
-          |  "D" -> "C # 2/2"
+          |  node [shape=box];
+          |  "A";
+          |  "B # 1/2";
+          |  "B # 2/2";
+          |  "C # 1/2";
+          |  "C # 2/2";
+          |  "D";
+          |  "B # 1/2" -> "A";
+          |  "B # 2/2" -> "A";
+          |  "C # 1/2" -> "A";
+          |  "C # 1/2" -> "B # 1/2";
+          |  "C # 1/2" -> "B # 2/2";
+          |  "C # 2/2" -> "A";
+          |  "C # 2/2" -> "B # 1/2";
+          |  "C # 2/2" -> "B # 2/2";
+          |  "D" -> "C # 1/2";
+          |  "D" -> "C # 2/2";
           |}""".stripMargin
   }
 
@@ -49,30 +56,69 @@ class VisualizeSpec extends Specification with ThrownExpectations { def is = s2"
     val app = E(A(), Foo())
 
     val filter = Visualize.packageFilter(includePackages = "org.zalando.grafter".r, excludePackages = Some("org.zalando.grafter.visualize".r))
-    val dot = app.asDotString(filter)
+    val dot = app.asDotString(filter, display = None)
 
     dot ====
       s"""|strict digraph {
-          |  "A" [shape=box];
-          |  "E" [shape=box];
-          |  "E" -> "A"
+          |  node [shape=box];
+          |  "A";
+          |  "E";
+          |  "E" -> "A";
           |}""".stripMargin
   }
 
   def s3 = {
 
-    val app = F(A(), G("name"))
+    val app = I(A(), h)
 
     val dot = app.asDotString
 
     dot ====
       s"""|strict digraph {
-          |  "A" [shape=box];
-          |  "F" [shape=box];
-          |  "F" -> "A"
+          |  node [shape=record];
+          |  "A";
+          |  "H" [label = "{H|+ anyVal=g\\l+ a=1\\l+ b=boo\\l+ c=2.0\\l+ d=a\\l+ e=true\\l+ f=1.0\\l+ g=-32768\\l+ h=-128\\l}"];
+          |  "I";
+          |  "I" -> "A";
+          |  "I" -> "H";
           |}""".stripMargin
   }
 
+  def s4 = {
+
+    val app = I(A(), h)
+
+    val dot = app.asDotString(display = Some(nodeDisplay.copy(summary = (p: Product) =>
+      p match {
+        case h: H => Some(h.anyVal.name)
+        case _ => None
+      })))
+
+    dot ====
+      s"""|strict digraph {
+          |  node [shape=record];
+          |  "A";
+          |  "H" [label = "{H|g\\l}"];
+          |  "I";
+          |  "I" -> "A";
+          |  "I" -> "H";
+          |}""".stripMargin
+  }
+
+  def s5 = {
+
+    val app = F(A(), G("name"))
+
+    val dot = app.asDotString(display = None)
+
+    dot ====
+      s"""|strict digraph {
+          |  node [shape=box];
+          |  "A";
+          |  "F";
+          |  "F" -> "A";
+          |}""".stripMargin
+  }
 }
 
 object Graph {
@@ -84,5 +130,8 @@ object Graph {
   case class E(a: A, foo: Foo)
   case class F(a: A, g: G)
   case class G(name: String) extends AnyVal
+  case class H(anyVal: G, a: Int, b: String, c: Double, d: Char, e: Boolean, f: Float, g: Short, h: Byte)
+  val h = H(G("g"), a = 1, b = "boo", c = 2.0, d = 'a', e = true, f = 1.0f, g = Short.MinValue, h = Byte.MinValue)
 
+  case class I(a: A, h: H)
 }
