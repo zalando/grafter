@@ -12,13 +12,15 @@ trait Visualize {
    * Generate a representation of the graph induced by the root component
    * in GraphViz DOT format (http://www.graphviz.org)
    *
-   * A filter can be used to filter out components
+   * included can be used to filter out components but keep their dependencies
+   * excluded can be used to filter out components and their dependencies (by default only AnyVal nodes are removed)
    */
   def asDotString[T <: Product](root:             T,
-                                filter:  Product => Boolean,
-                                display: Option[NodeDisplay]): String = {
+                                included:  Product => Boolean,
+                                excluded:  Any => Boolean,
+                                display:   Option[NodeDisplay]): String = {
 
-    val relation = Query.relation(root, filter)
+    val relation = Query.relation(root, included, excluded)
     val nodes = (relation.domain ++ relation.range).map(p => Node(p)).distinct
     val indexes: Map[HashCode, (Int, Int)] = indexByIdentityHashCode(nodes)
 
@@ -166,9 +168,10 @@ trait VisualizeSyntax {
     def asDotString: String =
       graph.asDotString()
 
-    def asDotString(filter:  Product => Boolean  = Visualize.packageFilter(),
-                    display: Option[NodeDisplay] = Some(Visualize.nodeDisplay)): String =
-      Visualize.asDotString(graph, filter, display)
+    def asDotString(included: Product => Boolean  = Visualize.packageFilter(),
+                    excluded: Any => Boolean      = Query.isAnyVal,
+                    display:  Option[NodeDisplay] = Some(Visualize.nodeDisplay)): String =
+      Visualize.asDotString(graph, included, excluded, display)
   }
 }
 

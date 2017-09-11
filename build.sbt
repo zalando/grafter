@@ -60,7 +60,7 @@ lazy val aggregateTest = ScopeFilter(
 lazy val commonSettings = Seq(
   organization         := "org.zalando",
   name                 := "grafter",
-  version in ThisBuild := "2.2.0"
+  version in ThisBuild := "2.2.1"
 )
 
 lazy val testSettings = Seq(

@@ -73,11 +73,35 @@ trait Query {
     collected.map(t => (t, ancestorsOf(relation)(t).toList.map(_.toList).distinct)).toMap
   }
 
-  def relation[G <: Product](graph: G, filter: Product => Boolean = (_:Product) => true): Relation[Product, Product] =
-    Relation.fromOneStep(graph, g => TreeRelation.treeChildren(g).filterNot(isAnyVal).filter(filter))
+  /**
+   * Create a relation for the whole graph:
+   *
+   *  - included specifies which nodes can stay in the graph. A filtered-out node will stay if it has children and there is
+   *     at least one of them which is not filtered out
+   *  - excluded specifies which nodes must be removed from the graph including their children
+   */
+  def relation[G <: Product](graph: G, included: Product => Boolean = (_:Product) => true, excluded: Any => Boolean = Query.isAnyVal): Relation[Product, Product] =
+    Relation.fromOneStep(graph, g => {
+      val children = TreeRelation.treeChildren(g).filterNot(excluded)
+      children.flatMap { c =>
+        if (included(c)) Vector(c)
+        else {
+          // if a node is filtered-out keep its children but only if they have children
+          // or if they must be kept
+          TreeRelation.treeChildren(c).filter { grandChild =>
+            !excluded(grandChild) &&
+            (included(grandChild) || TreeRelation.treeChildren(grandChild).nonEmpty)
+          }
+        }
+      }
+    })
 
 
-  private def isAnyVal[T](t: T): Boolean = {
+}
+
+object Query extends Query with QuerySyntax {
+
+  def isAnyVal[T](t: T): Boolean = {
     val klass = t.getClass
     t match {
       case p: Product if Modifier.isFinal(klass.getModifiers) && p.productArity == 1 =>
@@ -87,9 +111,8 @@ trait Query {
     }
   }
 
-}
 
-object Query extends Query with QuerySyntax
+}
 
 /**
  * Syntactic sugar for querying nodes in a graph
