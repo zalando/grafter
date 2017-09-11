@@ -9,18 +9,21 @@ import org.zalando.grafter.syntax.visualize._
 
 class VisualizeSpec extends Specification with ThrownExpectations { def is = s2"""
 
- The example graph must be correctly serialized into .dot format $s1
- A package filter can be used to only keep specified classes in the resulting graph $s2
+ The example graph must be correctly serialized into .dot format $create
+
+ A package filter can be used to only keep specified classes in the resulting graph $filter1
+ Included nodes are kept including their parents                                    $filter2
+ Excluded nodes are removed including their children                                $filter3
 
  Nodes can display more details
-   with their attributes  $s3
-   or with a node summary $s4
-   or not at all          $s5
+   with their attributes  $display1
+   or with a node summary $display2
+   or not at all          $display3
 
 """
   import Graph._
 
-  def s1 = Result.foreach(1 to 1000) { i =>
+  def create = Result.foreach(1 to 1000) { i =>
 
     val a = A()
     val b1 = B(a)
@@ -51,12 +54,12 @@ class VisualizeSpec extends Specification with ThrownExpectations { def is = s2"
           |}""".stripMargin
   }
 
-  def s2 = {
+  def filter1 = {
 
     val app = E(A(), Foo())
 
-    val filter = Visualize.packageFilter(includePackages = "org.zalando.grafter".r, excludePackages = Some("org.zalando.grafter.visualize".r))
-    val dot = app.asDotString(filter, display = None)
+    val included = Visualize.packageFilter(includePackages = "org.zalando.grafter".r, excludePackages = Some("org.zalando.grafter.visualize".r))
+    val dot = app.asDotString(included, display = None)
 
     dot ====
       s"""|strict digraph {
@@ -67,7 +70,50 @@ class VisualizeSpec extends Specification with ThrownExpectations { def is = s2"
           |}""".stripMargin
   }
 
-  def s3 = {
+  def filter2 = {
+
+    val app = J(E(A(), Foo()), F(A(), G("name")))
+
+    val included = (p: Product) => {
+      val className = p.getClass.getSimpleName
+      className.contains("A") || className.contains("G")
+    }
+    val dot = app.asDotString(included, display = None)
+
+    dot ====
+      s"""|strict digraph {
+          |  node [shape=box];
+          |  "A # 1/2";
+          |  "A # 2/2";
+          |  "J";
+          |  "J" -> "A # 1/2";
+          |  "J" -> "A # 2/2";
+          |}""".stripMargin
+  }
+
+  def filter3 = {
+
+    val app = J(E(A(), Foo()), F(A(), G("name")))
+
+    val included = (p: Product) => {
+      val className = p.getClass.getSimpleName
+      className.contains("A") || className.contains("G")
+    }
+    val excluded = (p: Any) => p.getClass.getSimpleName.contains("G")
+    val dot = app.asDotString(included, excluded, display = None)
+
+    dot ====
+      s"""|strict digraph {
+          |  node [shape=box];
+          |  "A # 1/2";
+          |  "A # 2/2";
+          |  "J";
+          |  "J" -> "A # 1/2";
+          |  "J" -> "A # 2/2";
+          |}""".stripMargin
+  }
+
+  def display1 = {
 
     val app = I(A(), h)
 
@@ -84,7 +130,7 @@ class VisualizeSpec extends Specification with ThrownExpectations { def is = s2"
           |}""".stripMargin
   }
 
-  def s4 = {
+  def display2 = {
 
     val app = I(A(), h)
 
@@ -105,7 +151,7 @@ class VisualizeSpec extends Specification with ThrownExpectations { def is = s2"
           |}""".stripMargin
   }
 
-  def s5 = {
+  def display3 = {
 
     val app = F(A(), G("name"))
 
@@ -134,4 +180,5 @@ object Graph {
   val h = H(G("g"), a = 1, b = "boo", c = 2.0, d = 'a', e = true, f = 1.0f, g = Short.MinValue, h = Byte.MinValue)
 
   case class I(a: A, h: H)
+  case class J(e: E, f: F)
 }

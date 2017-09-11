@@ -68,7 +68,9 @@ application.asDotString ====
 
 You can configure the generation of the `dot` graph by passing to the `asDotString` method:
 
- - `filter: Product => Boolean` to describe which nodes should be kept (by default everything is kept)
+ - `included: Product => Boolean` to describe which nodes should be kept, those nodes will be kept even if their parents are
+ being filtered out
+ - `excluded: Any => Boolean` to describe which nodes should be excluded including their children
  - `display: NodeDisplay(summary, attributesFilter)` to show more details for a given node
      - `summary: Product => Option[String]`. This function can be used to return a "summary" of a node to be displayed in a 
         box below the node name. The default is `_ => None`.
