@@ -3,18 +3,19 @@
 
 To use Grafter you can add it as a dependency in your sbt build settings:
 
-```tut:silent:fail
-libraryDependencies += "org.zalando" %% "grafter" % "2.0.1"
+```scala
+libraryDependencies += "org.zalando" %% "grafter" % "2.1.3"
+
+// if you use the ComponentsMatchers
+libraryDependencies += "org.zalando" %% "grafter" % "2.1.3" % "test" classifier "tests"
 ```
 
 Grafter also provides some annotations to help reducing the boilerplate in
 your code. If you decide to use them, you need to add the following scala
 compiler plugin to your sbt build:
 
-```tut:silent:fail
-addCompilerPlugin("org.scalameta" % "paradise" % "3.0.0-M9" cross CrossVersion.full)
-
-libraryDependencies += "org.scalameta" %% "contrib" % "1.8.0"
+```scala
+addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 ```
 
 Alternatively, if you are creating a new Grafter application with Http4s, you can use

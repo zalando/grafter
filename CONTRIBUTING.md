@@ -9,3 +9,9 @@ To avoid unnecessary work on either side, please stick to the following process:
 4. Pull requests must always contain tests for the functionality implemented / fixed
 
 In case you just want to help out and don't know where to start, [issues with "help wanted" label](https://github.com/zalando/grafter/issues?utf8=%E2%9C%93&q=is%3Aissue%20is%3Aopen%20label%3A%22help%20wanted%22) are good for first-time contributors.
+
+Unless you explicitly state otherwise in advance, any non trivial contribution intentionally submitted for
+inclusion in this project by you to the steward of this repository (Zalando SE, Berlin) shall be 
+under the terms and conditions of the [MIT License](README.md#license), without any additional copyright 
+information, terms or conditions.
+

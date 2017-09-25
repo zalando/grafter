@@ -56,7 +56,7 @@ App(C(""), C(1)).singletons
 In the example above making a singleton for `C` will take the first instance found, `c1` and assign it 
 to `c2` which would be incorrect.
 
-### Re-duplication
+### Non-singleton
 
 Most components in a application should be made singletons but not all. For example you might want to have 2 execution
 contexts with different configurations. Tree rewriting can also be used to that effect with the `modifyWith` and `replace` methods:
@@ -64,12 +64,39 @@ contexts with different configurations. Tree rewriting can also be used to that 
 import org.zalando.grafter.syntax.rewriter._
 
 val app: Application = 
-  application.singletons
-    .modifyWith { case s: HttpServer     => s.replace[ExecutionContextConfig](cpuExecutionContextConfig)}
-    .modifyWith { case s: BackendService => s.replace[ExecutionContextConfig](ioExecutionContextConfig)}
+  application
+    .modifyWith { 
+      case s: HttpServer     => s.replace[ExecutionContextConfig](cpuExecutionContextConfig)
+      case s: BackendService => s.replace[ExecutionContextConfig](ioExecutionContextConfig)
+    }
 ```
 
-The application has the exact desired shape and we can now [start it](start-stop.md)
+This will create an application where each component, `HttpServer` and `BackendService` have a distinct execution service
+configuration. But we still need to make singletons for all the other components! We can do this with the `singletonsBy`
+method:
+```scala
+import org.zalando.grafter.syntax.rewriter._
+
+val app: Application = 
+  application
+    .modifyWith { 
+      case s: HttpServer     => s.replace[ExecutionContextConfig](cpuExecutionContextConfig)
+      case s: BackendService => s.replace[ExecutionContextConfig](ioExecutionContextConfig)
+    }.singletonsBy(singletonByConfig)
+    
+    
+val singletonByConfig: PartialFunction[Any, Any] = {
+  case c: ExecutionService        => c.config
+  case c: ExecutionContextConfig  => c
+}    
+```
+
+The `singletonsBy` method will make singletons for every component in the application based on the component class.
+Except for `ExecutionService` and `ExecutionServiceConfig` components which should remain distinct, as long as the
+ execution configuration is distinct. This is specified by the `singletonByConfig` partial function and you can pass
+ several such functions for other components to `singletonsBy`.
+
+The application has the now exact desired shape and we can [start it](start-stop.md)
 
 ----
 Previous: [Interfaces](interfaces.md)

@@ -11,6 +11,8 @@ class RewriterSpec extends Specification with ThrownExpectations { def is = s2""
  An object graph can be rewritten with a node becoming a singleton object
    All identical nodes (having the same type) are replaced by just the first found instance $makeSingleton
    Singletons can be made according to a predicate                                          $makeSingletonPredicate
+   Singletons can be made according to a partial function discriminating instances          $makeSingletonBy
+   Singletons can be made according to some partial functions discriminating instances      $makeSingletonBys
    Making singletons must not fail on nested classes                                        $makeSingletonNestedClass
    Making singletons must not work on final classes                                         $makeSingletonFinalClass
    Making singletons must not work on AnyVal case classes                                   $makeSingletonAnyValClass
@@ -55,6 +57,30 @@ class RewriterSpec extends Specification with ThrownExpectations { def is = s2""
 
     rewritten.b.d must be(rewritten.c.d)
     rewritten.b.d must_== D("d1")
+  }
+
+  def makeSingletonBy = {
+    val rewritten = graph.singletonsBy {
+      case e: E => e.toString
+    }
+
+    rewritten.b.f must be(rewritten.b.f)
+    rewritten.b.e.toString must_== "e1"
+    rewritten.c.e.toString must_== "e2"
+  }
+
+  def makeSingletonBys = {
+    val byE: PartialFunction[Any, Any] = { case e: E => e.toString }
+    val byD: PartialFunction[Any, Any] = { case d: D => d.toString }
+
+    val rewritten = graph.singletonsBy(byE, byD)
+
+    rewritten.b.f must be(rewritten.b.f)
+    rewritten.b.d.toString must_== "d1"
+    rewritten.c.d.toString must_== "d2"
+
+    rewritten.b.e.toString must_== "e1"
+    rewritten.c.e.toString must_== "e2"
   }
 
   def makeSingletonNestedClass = {

@@ -13,6 +13,10 @@ case class D2()
 @reader
 case class D(d1: D1, d2: D2)
 
+object D {
+  val somethingElse = 1
+}
+
 object ReaderMacroTest {
   case class Config()
 

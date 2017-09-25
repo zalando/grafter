@@ -32,6 +32,11 @@ Grafter goes back to the fundamentals of dependency injection by *just using con
 Please read our [contributor guidelines](CONTRIBUTING.md) for more details. 
 And please check these [open issues](http://github.com/zalando/grafter/issues) for specific tasks.
 
+Unless you explicitly state otherwise in advance, any non trivial contribution intentionally submitted for 
+inclusion in this project by you to the steward of this repository (Zalando SE, Berlin) shall be 
+under the terms and conditions of the MIT License as written below, without any additional copyright 
+information, terms or conditions.
+
 ----
 
 ### License
