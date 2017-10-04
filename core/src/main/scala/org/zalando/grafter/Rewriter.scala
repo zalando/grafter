@@ -61,7 +61,7 @@ trait Rewriter {
     * Replace all values of type S with the same value, returning None if nothing was replaced,
     * or the rewritten graph otherwise.
     */
-  def replaceOrFail[S : ClassTag, G](s: S, graph: G): Option[G] = {
+  def replacedWith[S : ClassTag, G](s: S, graph: G): Option[G] = {
     val rewriter = new ReportSuccessRewriter
     val strat = rewriter.strategy[Any] {
       case v if v.implements[S] =>
@@ -263,8 +263,8 @@ trait RewriterSyntax {
     def replace[S : ClassTag](s: S): G =
       Rewriter.replace[S, G](s, graph)
 
-    def replaceOrFail[S : ClassTag](s: S): Option[G] =
-      Rewriter.replaceOrFail[S, G](s, graph)
+    def replacedWith[S : ClassTag](s: S): Option[G] =
+      Rewriter.replacedWith[S, G](s, graph)
 
     def replaceFirst[S : ClassTag](s: S): G =
       Rewriter.replaceFirst[S, G](s, graph)

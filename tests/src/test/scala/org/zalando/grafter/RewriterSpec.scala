@@ -24,7 +24,7 @@ class RewriterSpec extends Specification with ThrownExpectations { def is = s2""
  A replacement works with value classes                                                   $replaceValueClass
  A node can be modified by a function based on the node type                              $modifyNode
  A node can be modified by a partial function based on the node type                      $modifyNodeWith
- ReplaceOrFail returns something if and only if it replaced something                     $replaceOrFail
+ replacedWith returns something if and only if it replaced something                      $replacedWith
 
  Startable components can be started in order from the bottom up                          $startInOrder
    a singleton will start only once                                                       $startInOrderWithSingleton
@@ -107,12 +107,12 @@ class RewriterSpec extends Specification with ThrownExpectations { def is = s2""
     rewritten.b.d must be(d)
   }
 
-  def replaceOrFail = {
+  def replacedWith = {
     val d  = D("d3")
     val f2 = F2("f2")
     val rewritten        = graph.replace(d)
-    val maybeRewrittenD  = graph.replaceOrFail(d)
-    val maybeRewrittenF2 = graph.replaceOrFail(f2)
+    val maybeRewrittenD  = graph.replacedWith(d)
+    val maybeRewrittenF2 = graph.replacedWith(f2)
 
     maybeRewrittenD  must beSome(rewritten)
     maybeRewrittenF2 must beNone
