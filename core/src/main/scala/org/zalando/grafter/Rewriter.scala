@@ -1,9 +1,10 @@
 package org.zalando.grafter
 
 import java.lang.reflect.Modifier
+import java.util.concurrent.atomic.AtomicBoolean
 
 import cats.Eval
-import org.bitbucket.inkytonik.kiama.rewriting.{MemoRewriter, Rewritable, Strategy}
+import org.bitbucket.inkytonik.kiama.rewriting.{CallbackRewriter, MemoRewriter, Rewritable, Strategy}
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
@@ -51,10 +52,26 @@ trait Rewriter {
     rewrite(everywherebu(singletonsByStrategy(by, bys:_*)))(graph)
 
   /**
-    * Replace all values of type S, with the same value
+    * Replace all values of type S with the same value
     */
   def replace[S : ClassTag, G](s: S, graph: G): G =
     rewriteWithStrategy(replaceStrategy[S](s), graph)
+
+  /**
+    * Replace all values of type S with the same value, returning None if nothing was replaced,
+    * or the rewritten graph otherwise.
+    */
+  def replaceOrFail[S : ClassTag, G](s: S, graph: G): Option[G] = {
+    val rewriter = new ReportSuccessRewriter
+    val strat = rewriter.strategy[Any] {
+      case v if v.implements[S] =>
+        Some(s)
+    }
+
+    val newGraph = rewriteWithStrategy(strat, graph)
+
+    if (rewriter.successfullyReplaced.get) Some(newGraph) else None
+  }
 
   /**
     * Replace the first value of type S (topdown, with another value
@@ -246,6 +263,9 @@ trait RewriterSyntax {
     def replace[S : ClassTag](s: S): G =
       Rewriter.replace[S, G](s, graph)
 
+    def replaceOrFail[S : ClassTag](s: S): Option[G] =
+      Rewriter.replaceOrFail[S, G](s, graph)
+
     def replaceFirst[S : ClassTag](s: S): G =
       Rewriter.replaceFirst[S, G](s, graph)
 
@@ -284,4 +304,13 @@ private object GrafterMemoRewriter extends MemoRewriter {
     }
   }
 
+}
+
+private class ReportSuccessRewriter extends CallbackRewriter {
+  val successfullyReplaced = new AtomicBoolean(false)
+
+  override def rewriting[T](oldTerm: T, newTerm: T): T = {
+    successfullyReplaced.set(true)
+    newTerm
+  }
 }
