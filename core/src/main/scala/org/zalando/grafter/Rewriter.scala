@@ -1,7 +1,6 @@
 package org.zalando.grafter
 
 import java.lang.reflect.Modifier
-import java.util.concurrent.atomic.AtomicBoolean
 
 import cats.Eval
 import org.bitbucket.inkytonik.kiama.rewriting.{CallbackRewriter, MemoRewriter, Rewritable, Strategy}
@@ -70,7 +69,7 @@ trait Rewriter {
 
     val newGraph = rewriteWithStrategy(strat, graph)
 
-    if (rewriter.successfullyReplaced.get) Some(newGraph) else None
+    if (rewriter.successfullyReplaced) Some(newGraph) else None
   }
 
   /**
@@ -307,10 +306,10 @@ private object GrafterMemoRewriter extends MemoRewriter {
 }
 
 private class ReportSuccessRewriter extends CallbackRewriter {
-  val successfullyReplaced = new AtomicBoolean(false)
+  var successfullyReplaced = false
 
   override def rewriting[T](oldTerm: T, newTerm: T): T = {
-    successfullyReplaced.set(true)
+    successfullyReplaced = true
     newTerm
   }
 }
