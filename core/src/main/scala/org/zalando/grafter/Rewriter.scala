@@ -160,7 +160,7 @@ trait Rewriter {
     }
 
   /** start components from the bottom up */
-  def start[G](graph: G): Eval[List[StartResult]] = Eval.later {
+  def startAll[G](graph: G): Eval[List[StartResult]] = Eval.later {
     // this map is there to make sure we don't start a node twice
     // this is useful when there are singletons
     var started: Vector[Int] = Vector.empty
@@ -195,7 +195,7 @@ trait Rewriter {
    * stop components from the top down
    * we try to stop components even if previous components fail to stop
    */
-  def stop[G](graph: G): Eval[List[StopResult]] = Eval.later {
+  def stopAll[G](graph: G): Eval[List[StopResult]] = Eval.later {
     // this map is there to make sure we don't stop a node twice
     // this is useful when there are singletons
     var stopped: Vector[Int] = Vector.empty
@@ -277,11 +277,11 @@ trait RewriterSyntax {
     def modifyWith[T : ClassTag](f: PartialFunction[T, T]): G =
       Rewriter.modifyWith(f, graph)
 
-    def start: Eval[List[StartResult]] =
-      Rewriter.start(graph)
+    def startAll: Eval[List[StartResult]] =
+      Rewriter.startAll(graph)
 
-    def stop: Eval[List[StopResult]] =
-      Rewriter.stop(graph)
+    def stopAll: Eval[List[StopResult]] =
+      Rewriter.stopAll(graph)
   }
 }
 

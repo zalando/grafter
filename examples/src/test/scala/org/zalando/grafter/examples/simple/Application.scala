@@ -7,6 +7,6 @@ object Application {
     val config = ApplicationConfig.test
     val components = ApplicationComponents.reader[ApplicationConfig].apply(config).configure(config)
 
-    println(components.start)
+    println(components.startAll)
   }
 }
