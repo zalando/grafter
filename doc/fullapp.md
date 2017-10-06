@@ -19,7 +19,7 @@ object Application {
       ApplicationComponents.reader[ApplicationConfig].apply(config).
       configure(config)
 
-    println(components.start)
+    println(components.startAll)
   }
 }
 ```

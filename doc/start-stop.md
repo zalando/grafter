@@ -9,7 +9,7 @@ is such a component and must implement a `start` method returning a `StartResult
 import cats._
 
 val started: Eval[List[StartResult]] =
-  Rewriter.start(app)
+  Rewriter.startAll(app)
 ```
 
 The `List[StartResult]` can be used to diagnose the start up and
@@ -24,7 +24,7 @@ each component implementing `Stop` from the top down.
 import cats._
 
 val stop: Eval[List[StopResult]] =
-  Rewriter.stop(app)
+  Rewriter.stopAll(app)
 ```
 
 The major difference between the start and the stop strategies is that

@@ -168,14 +168,14 @@ class RewriterSpec extends Specification with ThrownExpectations { def is = s2""
   }
 
   def startInOrder =
-    Rewriter.start(graph).value ==== List(
+    Rewriter.startAll(graph).value ==== List(
       StartOk("d1"), StartOk("e1"), StartOk("f1"), StartOk("B"),
       StartOk("d2"), StartOk("e2"), StartOk("f2"), StartOk("C"),
       StartOk("A")
     )
 
   def startInOrderWithSingleton =
-    Rewriter.start(graph.singleton[E]).value ==== List(
+    Rewriter.startAll(graph.singleton[E]).value ==== List(
       StartOk("d1"), StartOk("e1"), StartOk("f1"), StartOk("B"),
       StartOk("d2"), StartOk("f2"), StartOk("C"),
       StartOk("A")
@@ -186,7 +186,7 @@ class RewriterSpec extends Specification with ThrownExpectations { def is = s2""
       B(D("d1"), ESub("e1"), F1("f1")),
       C(D("d2"), ESub("e2"), F1("f2")))
 
-    Rewriter.start(failedGraph).value ==== List(
+    Rewriter.startAll(failedGraph).value ==== List(
       StartOk("d1"), StartFailure("e1")
     )
   }
@@ -199,20 +199,20 @@ class RewriterSpec extends Specification with ThrownExpectations { def is = s2""
       B(D("d1"), new ESub("e1") { override def start = errorStart }, F1("f1")),
       C(D("d2"), ESub("e2"), F1("f2")))
 
-    Rewriter.start(errorGraph).value ==== List(
+    Rewriter.startAll(errorGraph).value ==== List(
       StartOk("d1"), StartError("e1", exception)
     )
   }
 
   def stopInOrder =
-    Rewriter.stop(graph).value ==== List(
+    Rewriter.stopAll(graph).value ==== List(
       StopOk("A"),
       StopOk("B"), StopOk("d1"), StopOk("e1"), StopOk("f1"),
       StopOk("C"), StopOk("d2"), StopOk("e2"), StopOk("f2")
     )
 
   def stopInOrderWithSingleton =
-    Rewriter.stop(graph.singleton[E]).value ==== List(
+    Rewriter.stopAll(graph.singleton[E]).value ==== List(
       StopOk("A"),
       StopOk("B"), StopOk("d1"), StopOk("e1"), StopOk("f1"),
       StopOk("C"), StopOk("d2"), StopOk("f2")
@@ -224,7 +224,7 @@ class RewriterSpec extends Specification with ThrownExpectations { def is = s2""
       B(D("d1"), ESub("e1"), F1("f1")),
       C(D("d2"), ESub("e2"), F1("f2")))
 
-    Rewriter.stop(failedGraph).value ==== List(
+    Rewriter.stopAll(failedGraph).value ==== List(
       StopOk("A"),
       StopOk("B"), StopOk("d1"), StopFailure("e1"), StopOk("f1"),
       StopOk("C"), StopOk("d2"), StopFailure("e2"), StopOk("f2")
@@ -239,7 +239,7 @@ class RewriterSpec extends Specification with ThrownExpectations { def is = s2""
       B(D("d1"), new ESub("e1") { override def stop = errorStop }, F1("f1")),
       C(D("d2"), ESub("e2"), F1("f2")))
 
-    Rewriter.stop(errorGraph).value ==== List(
+    Rewriter.stopAll(errorGraph).value ==== List(
       StopOk("A"),
       StopOk("B"), StopOk("d1"), StopError("e1", exception), StopOk("f1"),
       StopOk("C"), StopOk("d2"), StopFailure("e2"), StopOk("f2")
