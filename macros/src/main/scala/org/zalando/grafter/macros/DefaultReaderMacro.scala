@@ -16,15 +16,30 @@ object DefaultReaderMacro {
       annotationInputs(c)(annotationName)(annottees)
 
     classTree match {
-      case ClassDef(_, className, _, _) =>
+      case ClassDef(_, className, typeParams, _) =>
         val genericTypeName = internal.reificationSupport.freshTypeName("A")
         val typeParam = typeParameter(annotationName)(c)
 
-        outputs(c)(classTree, className, companionTree) {
-          q"""
+        typeParams match {
+          case _ :: Nil =>
+            outputs(c)(classTree, className, companionTree) {
+              q"""
+         implicit def reader[$genericTypeName, F[_]](implicit defaultReader: cats.data.Reader[$genericTypeName, $typeParam[F]]): cats.data.Reader[$genericTypeName, $className[F]] =
+           org.zalando.grafter.GenericReader.widenReader(defaultReader)
+      """
+            }
+
+          case Nil =>
+            outputs(c)(classTree, className, companionTree) {
+              q"""
          implicit def reader[$genericTypeName](implicit defaultReader: cats.data.Reader[$genericTypeName, $typeParam]): cats.data.Reader[$genericTypeName, $className] =
            org.zalando.grafter.GenericReader.widenReader(defaultReader)
       """
+            }
+
+          case other =>
+            c.abort(c.macroApplication.pos, s"the @$annotationName annotation must specify a type containing at most one type parameter, found $other")
+
         }
 
       case other =>

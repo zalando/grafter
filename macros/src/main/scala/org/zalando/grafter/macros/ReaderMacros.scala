@@ -53,7 +53,14 @@ object ReaderMacros {
 
   def fieldsNamesAndTypes(c: whitebox.Context)(fields: List[c.universe.Tree]): List[(c.universe.TermName, c.universe.Tree)] = {
     import c.universe._
-    fields.collect { case ValDef(mods, fieldName, fieldType, _) if mods.hasFlag(Flag.CASEACCESSOR) =>
+    fields.collect { case ValDef(mods, fieldName, fieldType, _) if mods.hasFlag(Flag.CASEACCESSOR) && !mods.hasFlag(Flag.IMPLICIT) =>
+      (fieldName, fieldType)
+    }
+  }
+
+  def implicitFieldsNamesAndTypes(c: whitebox.Context)(fields: List[c.universe.Tree]): List[(c.universe.TermName, c.universe.Tree)] = {
+    import c.universe._
+    fields.collect { case ValDef(mods, fieldName, fieldType, _) if mods.hasFlag(Flag.CASEACCESSOR) && mods.hasFlag(Flag.IMPLICIT) =>
       (fieldName, fieldType)
     }
   }
