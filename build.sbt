@@ -37,6 +37,13 @@ lazy val tests = (project in file("tests")).
       Seq(publishArtifact := false)
   ).dependsOn(core, core % "test->test", macros)
 
+lazy val guide = (project in file("guide")).
+  settings(
+    compilationSettings ++
+      testSettings ++
+      Seq(publishArtifact := false)
+  ).dependsOn(core, core % "test->test", macros)
+
 lazy val rootSettings = Seq(
   unmanagedSourceDirectories in Compile := unmanagedSourceDirectories.all(aggregateCompile).value.flatten,
   unmanagedSourceDirectories in Test    := unmanagedSourceDirectories.all(aggregateTest).value.flatten,
@@ -60,12 +67,13 @@ lazy val aggregateTest = ScopeFilter(
 lazy val commonSettings = Seq(
   organization         := "org.zalando",
   name                 := "grafter",
-  version in ThisBuild := "2.4.0"
 )
 
 lazy val testSettings = Seq(
   fork          in Test := true,
   scalacOptions in Test ++= Seq("-Yrangepos"),
+  scalacOptions in Test -= "-Ywarn-unused",
+  scalacOptions in Test -= "-Xlint",
   testFrameworks in Test := Seq(TestFrameworks.Specs2),
   testOptions in Test += Tests.Filter(s => !s.endsWith("Specification")),
   coverageEnabled := false
