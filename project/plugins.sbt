@@ -4,6 +4,7 @@ resolvers ++= Seq(
   "Era7 maven releases" at "http://releases.era7.com.s3.amazonaws.com"
 )
 
+addSbtPlugin("org.tpolecat" % "tut-plugin" % "0.5.2")
 addSbtPlugin("com.ambiata"    % "promulgate"    % "0.11.0-20160104104535-e21b092")
 addSbtPlugin("org.scoverage"  % "sbt-scoverage" % "1.5.0")
 addSbtPlugin("com.jsuereth"   % "sbt-pgp"       % "1.0.0")

@@ -5,7 +5,7 @@ going to traverse the application graph and start each component implementing
 `Start` from the bottom up. If you scroll up you will see that `PostgresDatabase`
 is such a component and must implement a `start` method returning a `StartResult`.
 
-```scala
+```tut:silent:fail
 import cats._
 
 val started: Eval[List[StartResult]] =
@@ -20,7 +20,7 @@ produce a nice error message if something went wrong.
 The application can also be stopped using the `Rewriter`. It will stop
 each component implementing `Stop` from the top down.
 
-```scala
+```tut:silent:fail
 import cats._
 
 val stop: Eval[List[StopResult]] =

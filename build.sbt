@@ -10,7 +10,11 @@ lazy val grafter = (project in file(".")).
     publishSettings
   ).aggregate(core, macros)
 
+enablePlugins(TutPlugin)
+tutSourceDirectory := file("doc")
+
 lazy val core = (project in file("core")).
+  enablePlugins(TutPlugin).
   settings(
     compilationSettings ++
     testSettings ++
