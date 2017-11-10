@@ -96,6 +96,15 @@ object Database {
 This `Reader` instance is simply delegating to the `Reader` instance of `PostgresDatabase` and we now know that we have
 such an instance because there is a `@reader` annotation on `PostgresDatabase`.
 
+### Warning
+
+![warning](images/icon_failure_sml.gif) ** All the components must be totally side-effects free when instantiated! **
+They must not start a database connection or a http server or even do some logging!
+
+Indeed, when using `Readers` to create components, the same `Database` component can be instantiated from different paths
+in the application graph and become "duplicated" at that stage (see ${"create singletons" ~/ CreateSingletons} to fix this).
+So it is particularly important that the "start" of an application is done in a very controlled way: ${"start the application" ~/ StartApplication}.
+
 ### Summary
 
 In summary, to wire an application with Grafter you need to annotate:

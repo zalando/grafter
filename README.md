@@ -5,25 +5,14 @@
 [![Maven Central](https://img.shields.io/maven-central/v/org.zalando/grafter_2.12.svg)](https://maven-badges.herokuapp.com/maven-central/org.zalando/grafter_2.12)
 [![Codecove](https://codecov.io/github/zalando/grafter/coverage.svg?precision=2)
 
-![grafting](https://autonomyacres.files.wordpress.com/2015/04/crown-cleft-grafting-fruit-trees.jpg?w=300&h=284)
+![](guide/src/test/resources/images/grafter.png|width=100)
 
 ## What's wrong with constructor injection again?
 
 There are [many](https://github.com/adamw/macwire) [libraries](https://github.com/google/guice) or [approaches](http://www.cakesolutions.net/teamblogs/2011/12/19/cake-pattern-in-depth) for doing [dependency injection](https://en.wikipedia.org/wiki/Dependency_injection) in Scala.
 Grafter goes back to the fundamentals of dependency injection by *just using constructor injection*: no reflection, no xml, no implementation inheritance or self-types.
 
- - [Installation](doc/installation.md)
- - [Introduction](doc/introduction.md)
- - [Grafter Components](doc/components.md)
- - [Creating your first components](doc/creating.md)
- - [In a library](doc/library.md)
- - [Remove boilerplate](doc/boilerplate.md)
- - [Use interfaces](doc/interfaces.md)
- - [Make singletons](doc/singletons.md)
- - [Start and Stop an application](doc/start-stop.md)
- - [Testing](doc/testing.md)
- - [Inspect the application graph](doc/inspect-app-graph.md)
- - [A full application example](doc/fullapp.md)
+Please read the [User Guide](https://zalando.github.io/grafter) to learn how to install and use Grafter.
 
 ---
 

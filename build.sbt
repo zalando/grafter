@@ -41,8 +41,11 @@ lazy val guide = (project in file("guide")).
   settings(
     compilationSettings ++
       testSettings ++
+      Seq(git.remoteRepo := "git@github.com:zalando/grafter.git",
+          siteSourceDirectory := target.value / "specs2-reports") ++
       Seq(publishArtifact := false)
-  ).dependsOn(core, core % "test->test", macros)
+  ).dependsOn(core, core % "test->test", macros).
+  enablePlugins(GhpagesPlugin)
 
 lazy val rootSettings = Seq(
   unmanagedSourceDirectories in Compile := unmanagedSourceDirectories.all(aggregateCompile).value.flatten,
@@ -66,7 +69,7 @@ lazy val aggregateTest = ScopeFilter(
 
 lazy val commonSettings = Seq(
   organization         := "org.zalando",
-  name                 := "grafter",
+  name                 := "grafter"
 )
 
 lazy val testSettings = Seq(
