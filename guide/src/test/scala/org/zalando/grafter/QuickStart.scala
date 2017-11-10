@@ -10,7 +10,7 @@ To use Grafter you need add it as a dependency in your sbt build settings:
 libraryDependencies += "org.zalando" %% "grafter" % "$version"
 
 // you also need the macros plugin for the grafter annotations
-addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
 ```
 
 ### Your first application
