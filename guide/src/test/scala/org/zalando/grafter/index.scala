@@ -1,5 +1,5 @@
 import org.specs2.io._
-
+import org.specs2.main.Arguments
 import org.zalando.grafter._
 
 /**
@@ -10,7 +10,7 @@ import org.zalando.grafter._
  * sbt> makeSite
  * sbt> ghPagesPushSite
  */
-object index extends UserGuidePage { def is = "Welcome to Grafter!".title ^ s2"""
+object index extends UserGuidePage { def is = "Welcome to Grafter!".title ^ Arguments.split("!html.toc !html.search html.nostats") ^ s2"""
  ${step(copyResources)}
 
 <img style="width:10cm" src="./images/grafter.png"/>
