@@ -1,7 +1,7 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>Main concepts</title>
+    <title>Finally tagless</title>
     <link href="./images/s2.ico"                                   type="image/x-icon" rel="specs2 icon"/>
     <link href="./css/opensans-fonts.css"                          type="text/css"     rel="stylesheet" />
     <link href="./css/bootstrap.min.css"                           type="text/css"     rel="stylesheet" />
@@ -132,78 +132,34 @@
               </ul>
                   </ul>
     </li>
-              </ul></div><script>$(function () { $('#tree').jstree({'core':{'initially_open':['index','org-zalando-grafter-concepts'], 'animation':200}, 'themes' : {'theme': 'default','url': './css/themes/default/style.css'}, 'plugins':['themes', 'html_data']}); });</script>
+              </ul></div><script>$(function () { $('#tree').jstree({'core':{'initially_open':['index','org-zalando-grafter-finallytagless'], 'animation':200}, 'themes' : {'theme': 'default','url': './css/themes/default/style.css'}, 'plugins':['themes', 'html_data']}); });</script>
 
 </div>
 </div>
 
 
 <div class="col-md-10 col-sm-9 col-xs-9">
-<h1>Main concepts</h1>
+<h1>Finally tagless</h1>
 <div id="tipue_search_content"></div>
 
-<h3 id="readers-all-the-way-down">Readers all the way down</h3>
-<p>An application such as the one shown in <link class="ok"> <a href="org.zalando.grafter.QuickStart.html" tooltip="" class="ok">QuickStart</a></link> is merely a case class having its dependencies modeled as attributes.</p>
-<p>Similarly the application configuration is a case class containing every piece of information needed to build the <code class="prettyprint">Application</code>. How do we connect the 2?</p>
-<p>This is the purpose of the <code class="prettyprint">@reader</code> annotation on <code class="prettyprint">Application</code>. The <code class="prettyprint">@reader</code> annotation generates a <code class="prettyprint">reader</code> method in the companion object of <code class="prettyprint">Application</code>:</p>
-<pre><code class="prettyprint">import cats.data.Reader
+<p>The <a href="http://okmij.org/ftp/tagless-final/index.html">“finally tagless”</a> style for organising software functionalities is more and more popular. Grafter supports this approach by allowing you to specify a type constructor as the type parameter of a component:</p>
+<pre><code class="prettyprint">import org.zalando.grafter.macros.{defaultReader, reader}
+import cats.Monad
 
-object Application {
+@defaultReader[DatabaseUserOperations]
+trait UserOperations[F[_]] {
+  def getUser(name: String): F[User]
+  def createUser(name: String): F[User]
+}
 
-  implicit def reader[A](implicit r1: Reader[A, HttpServer], r2: Reader[A, Database]): Reader[A, Application] =
-    Reader(a =&gt; Application(r1(a), r2(a)))
+@reader
+case class DatabaseUserOperations[F[_]](config: DbConfig)(implicit val m: Monad[F]) extends UserOperations[F] {
 
-}</code></pre>
-<p>The declaration above states that:</p>
-<ul>
-<li>if there is a implicit <code class="prettyprint">Reader</code> instance to create an <code class="prettyprint">HttpServer</code> from any object of type <code class="prettyprint">A</code></li>
-<li>if there is a implicit <code class="prettyprint">Reader</code> instance to create a <code class="prettyprint">Database</code> from any object of type <code class="prettyprint">A</code></li>
-<li><em>then</em> there is an implicit <code class="prettyprint">Reader</code> instance to create an <code class="prettyprint">Application</code> from any object of type <code class="prettyprint">A</code>
-<p/></li>
-</ul>
-<p>This means that we can instantiate the <code class="prettyprint">Application</code> from an <code class="prettyprint">ApplicationConfig</code>, provided that we get a way to instantiate an <code class="prettyprint">HttpServer</code> and a <code class="prettyprint">Database</code> from an <code class="prettyprint">ApplicationConfig</code>. The <code class="prettyprint">@reader</code> annotation on <code class="prettyprint">HttpServer</code> gives us:</p>
-<pre><code class="prettyprint">import cats.data.Reader
-
-object HttpServer {
-
-  implicit def reader[A](implicit r1: Reader[A, HttpConfig]): Reader[A, HttpServer] =
-    Reader(a =&gt; HttpServer(r1(a)))
+  def getUser(name: String): F[User] = ???
+  def createUser(name: String): F[User] = ???
 
 }</code></pre>
-<p>How can we build an <code class="prettyprint">HttpConfig</code> from the <code class="prettyprint">ApplicationConfig</code>? This is the purpose of the <code class="prettyprint">@readers</code> annotation on <code class="prettyprint">ApplicationConfig</code>. This will generate concrete readers for each member of <code class="prettyprint">ApplicationConfig</code>:</p>
-<pre><code class="prettyprint">object ApplicationConfig {
-
-  implicit def httpConfigReader: Reader[ApplicationConfig, HttpConfig] =
-    Reader(_.httpConfig)
-
-  implicit def dbConfigReader: Reader[ApplicationConfig, DbConfig] =
-    Reader(_.dbConfig)
-}</code></pre>
-<p>From there the magic of implicit resolution will give us a valid <code class="prettyprint">Application.reader[ApplicationConfig]</code>. Well, almost. You might have noticed that <code class="prettyprint">Database</code> is an interface, not a case class. How can we instantiate such an interface from the application configuration?</p>
-<h3 id="deal-with-interfaces">Deal with interfaces</h3>
-<p>For interfaces we need a special annotation which will specify a concrete implementation to instantiate, the <code class="prettyprint">@defaultReader</code> annotation. It generates the following reader:</p>
-<pre><code class="prettyprint">object Database {
-  implicit def reader[A]: Reader[A, PostgresDatabase] =
-    PostgresDatabase.reader[A]
-}</code></pre>
-<p>This <code class="prettyprint">Reader</code> instance is simply delegating to the <code class="prettyprint">Reader</code> instance of <code class="prettyprint">PostgresDatabase</code> and we now know that we have such an instance because there is a <code class="prettyprint">@reader</code> annotation on <code class="prettyprint">PostgresDatabase</code>.</p>
-<h3 id="warning">Warning</h3>
-<p><img src="images/icon_failure_sml.gif" alt="warning" /> ** All the components must be totally side-effects free when instantiated! ** They must not start a database connection or a http server or even do some logging!</p>
-<p>Indeed, when using <code class="prettyprint">Readers</code> to create components, the same <code class="prettyprint">Database</code> component can be instantiated from different paths in the application graph and become “duplicated” at that stage (see <link class="ok"> <a href="org.zalando.grafter.CreateSingletons.html" tooltip="" class="ok">create singletons</a></link> to fix this). So it is particularly important that the “start” of an application is done in a very controlled way: <link class="ok"> <a href="org.zalando.grafter.StartApplication.html" tooltip="" class="ok">start the application</a></link>.</p>
-<h3 id="summary">Summary</h3>
-<p>In summary, to wire an application with Grafter you need to annotate:</p>
-<ul>
-<li>components with <code class="prettyprint">@reader</code></li>
-<li>interfaces with <code class="prettyprint">@defaultReader</code></li>
-<li>the configuration with <code class="prettyprint">@readers</code>
-<p/></li>
-</ul>
-<p>There are a few more things you might need to know:</p>
-<ul>
-<li>how to <link class="ok"> <a href="org.zalando.grafter.CreateSingletons.html" tooltip="" class="ok">create singletons</a></link>?</li>
-<li>how to <link class="ok"> <a href="org.zalando.grafter.StartApplication.html" tooltip="" class="ok">start the application</a></link>?</li>
-<li>how to <link class="ok"> <a href="org.zalando.grafter.TestApplication.html" tooltip="" class="ok">test the application</a></link>?</li>
-</ul>
+<p>As you can see there is a minor drawback because you would probably like to write <code class="prettyprint">case class DatabaseUserOperations[F[_] : Monad]</code>. This is not currently possible because of <a href="https://github.com/scala/bug/issues/10589">this Scala bug</a>. Please vote for it or even better propose a PR on the Scala project!</p>
 </div>
 
 <script>
