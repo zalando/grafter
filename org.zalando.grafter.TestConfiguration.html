@@ -1,0 +1,127 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Test the configuration</title>
+    <link href="./images/s2.ico"                                   type="image/x-icon" rel="specs2 icon"/>
+    <link href="./css/opensans-fonts.css"                          type="text/css"     rel="stylesheet" />
+    <link href="./css/bootstrap.min.css"                           type="text/css"     rel="stylesheet" />
+    <link href="./css/font-awesome.min.css"                        type="text/css"     rel="stylesheet" />
+    <link href="./css/prettify.css"                                type="text/css"     rel="stylesheet" />
+    <link href="./css/tabber.css"                                  type="text/css"     rel="stylesheet" />
+    <link href="./css/tipuesearch.css"                             type="text/css"     rel="stylesheet" />
+    <link href="./css/specs2.css"                                  type="text/css"     rel="stylesheet" />
+    <link href="./css/specs2-user.css"                             type="text/css"     rel="stylesheet" />
+
+    <script src="./javascript/jquery.js"                           type="text/javascript"></script>
+    <script src="./javascript/jquery.jstree.js"                    type="text/javascript"></script>
+    <script src="./javascript/tabber.js"                           type="text/javascript"></script>
+    <script src="./javascript/tabber_start.js"                     type="text/javascript"></script>
+    <script src="./javascript/prettify.js"                         type="text/javascript"></script>
+    <script src="./javascript/specs2.js"                           type="text/javascript"></script>
+    <script src="./javascript/specs2-user.js"                      type="text/javascript"></script>
+    <script src="./javascript/tipuesearch/tipuesearch_set.js"      type="text/javascript"></script>
+    <script src="./javascript/tipuesearch/tipuesearch_contents.js" type="text/javascript"></script>
+    <script src="./javascript/tipuesearch/tipuesearch.min.js"      type="text/javascript"></script>
+
+</head>
+<body onload="prettyPrint(); tabberAutomatic([])">
+
+<div class="container">
+
+<div class="col-md-1"></div>
+
+<div class="col-md-1"></div>
+
+
+
+
+<div class="col-md-10 col-sm-9 col-xs-9">
+<h1>Test the configuration</h1>
+<div id="tipue_search_content"></div>
+
+<p>In the page about <link class="ok"> <a href="org.zalando.grafter.CreateSingletons.html" tooltip="" class="ok">making singletons</a></link> we see that we can modify the configuration of some components with <code class="prettyprint">modifyWith</code> and create a limited number of instances for some components.</p>
+<p>It is highly recommended that you add tests to check that the modification you intend to make on your graph really happen as you wish.</p>
+<h3 id="collecting-ancestors">Collecting ancestors</h3>
+<p>For example we can collect all the components using a specific component type:</p>
+<pre><code class="prettyprint">import org.zalando.grafter.syntax.query._
+
+val usersOfHttpClient: Map[HttpClient, List[List[Any]]] =
+  application.ancestors[HttpClient]</code></pre>
+<p>If we take the example shown in <link class="ok"> <a href="org.zalando.grafter.CreateSingletons.html" tooltip="" class="ok">making singletons</a></link>, we can then make sure that we end up with a <code class="prettyprint">Map</code> containing one <code class="prettyprint">HttpClient</code> used by the <code class="prettyprint">CustomerService</code> and a different <code class="prettyprint">HttpClient</code> used by the <code class="prettyprint">PriceService</code>.</p>
+<h3 id="visual-inspection">Visual inspection</h3>
+<p>A quick and useful way to check the state of your application is to create the corresponding graph:</p>
+<pre><code class="prettyprint">import org.zalando.grafter.syntax.visualize._
+
+val application = Application.prod
+
+application.asDotString ====
+  s&quot;&quot;&quot;
+  |strict digraph {
+  |  node [shape=record]
+  |  &quot;A&quot;;
+  |  &quot;B # 1/2&quot;;
+  |  &quot;B # 2/2&quot;;
+  |  &quot;C # 1/2&quot;;
+  |  &quot;C # 2/2&quot;;
+  |  &quot;D&quot;;
+  |  &quot;B # 1/2&quot; -&gt; &quot;A&quot;;
+  |  &quot;B # 2/2&quot; -&gt; &quot;A&quot;;
+  |  &quot;C # 1/2&quot; -&gt; &quot;A&quot;;
+  |  &quot;C # 1/2&quot; -&gt; &quot;B # 1/2&quot;;
+  |  &quot;C # 1/2&quot; -&gt; &quot;B # 2/2&quot;;
+  |  &quot;C # 2/2&quot; -&gt; &quot;A&quot;;
+  |  &quot;C # 2/2&quot; -&gt; &quot;B # 1/2&quot;;
+  |  &quot;C # 2/2&quot; -&gt; &quot;B # 2/2&quot;;
+  |  &quot;D&quot; -&gt; &quot;C # 1/2&quot;;
+  |  &quot;D&quot; -&gt; &quot;C # 2/2&quot;;
+  |}&quot;&quot;&quot;.stripMargin</code></pre>
+<p><code class="prettyprint">asDotString</code> produces a <code class="prettyprint">.dot</code> graph which you can visualize with <a href="http://www.webgraphviz.com">webgraphviz</a> or similar tools.</p>
+<div class="figure">
+<img src="images/webgraphviz-example.png" alt="" />
+
+</div>
+<h5 id="configuration">Configuration</h5>
+<p>You can configure the generation of the <code class="prettyprint">dot</code> graph by passing to the <code class="prettyprint">asDotString</code> method:</p>
+<ul>
+<li><p><code class="prettyprint">included: Product =&gt; Boolean</code> to describe which nodes should be kept, those nodes will be kept even if their parents are being filtered out</p></li>
+<li><p><code class="prettyprint">excluded: Any =&gt; Boolean</code> to describe which nodes should be excluded including their children</p></li>
+<li><code class="prettyprint">display: NodeDisplay(summary, attributesFilter)</code> to show more details for a given node
+<ul>
+<li><p><code class="prettyprint">summary: Product =&gt; Option[String]</code>. This function can be used to return a “summary” of a node to be displayed in a box below the node name. The default is <code class="prettyprint">_ =&gt; None</code>.</p></li>
+<li><code class="prettyprint">attributesFilter: Any =&gt; Option[Any]</code>. If <code class="prettyprint">summary</code> doesn’t return a result, this function is called for every of the product attributes. By default only “primitive” values (<code class="prettyprint">String</code>, <code class="prettyprint">Int</code>, <code class="prettyprint">AnyVal</code>,…) values are being shown
+<p/></li>
+</ul></li>
+</ul>
+<h3 id="with-specs2">With specs2</h3>
+<p>If you use <a href="http://specs2.org"><strong>specs2</strong></a> you can use the <code class="prettyprint">org.zalando.grafter.specs2.matcher.ComponentsMatchers</code> trait to check the number of components of a given type in your application:</p>
+<pre><code class="prettyprint">import org.zalando.grafter.specs2.matcher._
+import org.specs2.Specification
+
+class ApplicationSpec extends Specification with ComponentsMatchers { def is = s2&quot;&quot;&quot;
+
+The application contains the right number of components $checkApplication
+
+&quot;&quot;&quot;
+
+  val application = Application()
+
+  def checkApplication = {
+    application must containInstances(
+      classOf[Service1] -&gt; 1,
+      classOf[Service2] -&gt; 1,
+      classOf[Service3] -&gt; 2
+    )
+  }
+
+}
+
+case class Application(service1: Service1 = Service1(), service2: Service2 = Service2())
+case class Service1(service3: Service3 = Service3())
+case class Service2(service3: Service3 = Service3())
+case class Service3()</code></pre>
+</div>
+
+</div>
+
+</body>
+</html>

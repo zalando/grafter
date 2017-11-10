@@ -1,0 +1,182 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Singletons</title>
+    <link href="./images/s2.ico"                                   type="image/x-icon" rel="specs2 icon"/>
+    <link href="./css/opensans-fonts.css"                          type="text/css"     rel="stylesheet" />
+    <link href="./css/bootstrap.min.css"                           type="text/css"     rel="stylesheet" />
+    <link href="./css/font-awesome.min.css"                        type="text/css"     rel="stylesheet" />
+    <link href="./css/prettify.css"                                type="text/css"     rel="stylesheet" />
+    <link href="./css/tabber.css"                                  type="text/css"     rel="stylesheet" />
+    <link href="./css/tipuesearch.css"                             type="text/css"     rel="stylesheet" />
+    <link href="./css/specs2.css"                                  type="text/css"     rel="stylesheet" />
+    <link href="./css/specs2-user.css"                             type="text/css"     rel="stylesheet" />
+
+    <script src="./javascript/jquery.js"                           type="text/javascript"></script>
+    <script src="./javascript/jquery.jstree.js"                    type="text/javascript"></script>
+    <script src="./javascript/tabber.js"                           type="text/javascript"></script>
+    <script src="./javascript/tabber_start.js"                     type="text/javascript"></script>
+    <script src="./javascript/prettify.js"                         type="text/javascript"></script>
+    <script src="./javascript/specs2.js"                           type="text/javascript"></script>
+    <script src="./javascript/specs2-user.js"                      type="text/javascript"></script>
+    <script src="./javascript/tipuesearch/tipuesearch_set.js"      type="text/javascript"></script>
+    <script src="./javascript/tipuesearch/tipuesearch_contents.js" type="text/javascript"></script>
+    <script src="./javascript/tipuesearch/tipuesearch.min.js"      type="text/javascript"></script>
+
+</head>
+<body onload="prettyPrint(); tabberAutomatic([])">
+
+<div class="container">
+
+<div class="col-md-1"></div>
+
+<div class="col-md-1"></div>
+
+
+
+
+<div class="col-md-10 col-sm-9 col-xs-9">
+<h1>Singletons</h1>
+<div id="tipue_search_content"></div>
+
+<h3 id="make-singletons">Make singletons</h3>
+<p>When an application is instantiated with a <code class="prettyprint">Reader</code> instance, it gets created as a tree of components with distinct instances for the same type:</p>
+<pre><code class="prettyprint">                            +-------+
+                            |  App  |
+                            +-------+
+                                |
+                         +--------------+
+              +----------|  HttpServer  |-------+
+              |          +--------------+       |
+              |                                 |
+     +-------------------+              +----------------+
+     | GetCustomersRoute |              | GetOrdersRoute |
+     +-------------------+              +----------------+
+               |                           |            |
+  +-----------------+        +-----------------+    +--------------+
+  | CustomerService |        | CustomerService |    | PriceService |
+  +-----------------+        +-----------------+    +--------------+
+       |                            |                   |
+  +------------+             +------------+          +------------+
+  | HttpClient |             | HttpClient |          | HttpClient |
+  +------------+             +------------+          +------------+
+       |                             |                  |
+  +------------------+       +------------------+   +------------------+
+  | HttpClientConfig |       | HttpClientConfig |   | HttpClientConfig |
+  +------------------+       +------------------+   +------------------+
+</code></pre>
+<p>The trouble with this setup is that some components might hold onto precious resources, like a thread-pool. In that situation You don’t want them to be duplicated. You can make all the components in your tree become singletons with the <code class="prettyprint">singletons</code> method:</p>
+<pre><code class="prettyprint">import org.zalando.grafter.syntax.rewriter._
+
+val app: Application =
+  Application.reader(Config.prod).singletons</code></pre>
+<p>This call to <code class="prettyprint">singletons</code> is going to <em>rewrite</em> your application tree into a graph with singletons:</p>
+<pre><code class="prettyprint">                            +-------+
+                            |  App  |
+                            +-------+
+                                |
+                         +--------------+
+              +----------|  HttpServer  |------+
+              |          +--------------+      |
+              |                                |
+     +-------------------+              +----------------+
+     | GetCustomersRoute |              | GetOrdersRoute |
+     +-------------------+              +----------------+
+              |                              |
+  +-----------------+             +--------------+
+  | CustomerService |             | PriceService |
+  +-----------------+             +--------------+
+                 |                       |
+            +------------+               |
+            | HttpClient |---------------+
+            +------------+
+                 |
+            +------------------+
+            | HttpClientConfig |
+            +------------------+
+</code></pre>
+<h3 id="make-singletons-based-on-values">Make singletons based on values</h3>
+<h4 id="modify-components">Modify components</h4>
+<p>The previous rewrite uses the type of components to make singletons. In reality we might want a finer-grained strategy, based on components <em>values</em>. This means that we might first want to set specific values on specific components.</p>
+<p>This can be done with the <code class="prettyprint">modifyWith</code> method. For example let’s say <code class="prettyprint">HttpClientConfig</code> contains <code class="prettyprint">Uri</code> parameter pointing to a service we want to access. We want the <code class="prettyprint">CustomerService</code> and the <code class="prettyprint">PriceService</code> to get different configurations:</p>
+<pre><code class="prettyprint">import org.zalando.grafter.syntax.rewriter._
+
+val app: Application =
+  Application.reader(Config.prod).
+    modifyWith[Any] {
+      case c: CustomerService =&gt; c.replace(Config.prod.customersUri)
+      case c: PriceService    =&gt; c.replace(Config.prod.pricesUri)
+    }</code></pre>
+<p>This is the resulting graph:</p>
+<pre><code class="prettyprint">                            +-------+
+                            |  App  |
+                            +-------+
+                                |
+                         +--------------+
+              +----------|  HttpServer  |-------+
+              |          +--------------+       |
+              |                                 |
+     +-------------------+              +----------------+
+     | GetCustomersRoute |              | GetOrdersRoute |
+     +-------------------+              +----------------+
+               |                           |            |
+  +-----------------+        +-----------------+    +--------------+
+  | CustomerService |        | CustomerService |    | PriceService |
+  +-----------------+        +-----------------+    +--------------+
+       |                            |                   |
+  +------------+             +------------+          +------------+
+  | HttpClient |             | HttpClient |          | HttpClient |
+  +------------+             +------------+          +------------+
+       |                             |                  |
+  +------------------+       +------------------+   +------------------+
+  | HttpClientConfig |       | HttpClientConfig |   | HttpClientConfig |
+  +------------------+       +------------------+   +------------------+
+  | uri = &quot;http://c&quot; |       | uri = &quot;http://c&quot; |   | uri = &quot;http://p&quot; |
+  +------------------+       +------------------+   +------------------+</code></pre>
+<h4 id="make-the-singletons">Make the singletons</h4>
+<p>The next step is to make singletons across the whole application except for the components having a specific configuration which we want to preserve! This can be done with the <code class="prettyprint">singletonsBy</code> method taking partial functions to make singletons based on values:</p>
+<pre><code class="prettyprint">import org.zalando.grafter.syntax.rewriter._
+
+lazy val app: Application =
+  Application.reader(Config.prod).
+    modifyWith[Any] {
+    case c: CustomerService =&gt; c.replace(Config.prod.customersUri)
+    case c: PriceService    =&gt; c.replace(Config.prod.pricesUri)
+  }.singletonsBy(httpClientSingletons)
+
+lazy val httpClientSingletons: PartialFunction[Any, Any] = {
+  case c: HttpClient =&gt; c.config
+  case c: HttpClientConfig =&gt; c
+}</code></pre>
+<p>This leads to the final application graph:</p>
+<pre><code class="prettyprint">                            +-------+
+                            |  App  |
+                            +-------+
+                                |
+                         +--------------+
+              +----------|  HttpServer  |-------+
+              |          +--------------+       |
+              |                                 |
+     +-------------------+              +----------------+
+     | GetCustomersRoute |              | GetOrdersRoute |
+     +-------------------+              +----------------+
+               |                           |        |
+  +-----------------+                      |  +--------------+
+  | CustomerService |----------------------+  | PriceService |
+  +-----------------+                         +--------------+
+          |                                         |
+  +------------+                               +------------+
+  | HttpClient |                               | HttpClient |
+  +------------+                               +------------+
+          |                                         |
+  +------------------+                        +------------------+
+  | HttpClientConfig |                        | HttpClientConfig |
+  +------------------+                        +------------------+
+  | uri = &quot;http://c&quot; |                        | uri = &quot;http://p&quot; |
+  +------------------+                        +------------------+</code></pre>
+</div>
+
+</div>
+
+</body>
+</html>

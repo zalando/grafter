@@ -1,0 +1,71 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Test the application</title>
+    <link href="./images/s2.ico"                                   type="image/x-icon" rel="specs2 icon"/>
+    <link href="./css/opensans-fonts.css"                          type="text/css"     rel="stylesheet" />
+    <link href="./css/bootstrap.min.css"                           type="text/css"     rel="stylesheet" />
+    <link href="./css/font-awesome.min.css"                        type="text/css"     rel="stylesheet" />
+    <link href="./css/prettify.css"                                type="text/css"     rel="stylesheet" />
+    <link href="./css/tabber.css"                                  type="text/css"     rel="stylesheet" />
+    <link href="./css/tipuesearch.css"                             type="text/css"     rel="stylesheet" />
+    <link href="./css/specs2.css"                                  type="text/css"     rel="stylesheet" />
+    <link href="./css/specs2-user.css"                             type="text/css"     rel="stylesheet" />
+
+    <script src="./javascript/jquery.js"                           type="text/javascript"></script>
+    <script src="./javascript/jquery.jstree.js"                    type="text/javascript"></script>
+    <script src="./javascript/tabber.js"                           type="text/javascript"></script>
+    <script src="./javascript/tabber_start.js"                     type="text/javascript"></script>
+    <script src="./javascript/prettify.js"                         type="text/javascript"></script>
+    <script src="./javascript/specs2.js"                           type="text/javascript"></script>
+    <script src="./javascript/specs2-user.js"                      type="text/javascript"></script>
+    <script src="./javascript/tipuesearch/tipuesearch_set.js"      type="text/javascript"></script>
+    <script src="./javascript/tipuesearch/tipuesearch_contents.js" type="text/javascript"></script>
+    <script src="./javascript/tipuesearch/tipuesearch.min.js"      type="text/javascript"></script>
+
+</head>
+<body onload="prettyPrint(); tabberAutomatic([])">
+
+<div class="container">
+
+<div class="col-md-1"></div>
+
+<div class="col-md-1"></div>
+
+
+
+
+<div class="col-md-10 col-sm-9 col-xs-9">
+<h1>Test the application</h1>
+<div id="tipue_search_content"></div>
+
+<p>For integration testing you generally need to replace components which are at the frontier of your system and deeply embedded in your application.</p>
+<p>This is can be done with the <code class="prettyprint">replace</code> method:</p>
+<pre><code class="prettyprint">import org.zalando.grafter.syntax.rewriter._
+
+trait Database
+object mockDatabase extends Database {
+  // mock the database operations
+}
+
+// you can also replace the production configuration!
+val testConfiguration =
+  ApplicationConfig.prod.
+    replace[HttpConfig](HttpConfig(&quot;localhost&quot;, 8080))
+
+// create the application from the test configuration
+// and mock the database
+val application: Application =
+  Application.reader.apply(testConfiguration).
+    singletons.
+    replace[Database](mockDatabase)
+
+application.startAll</code></pre>
+<p><em>Note</em>: due to a limitation with the rewriting, final case classes with one arguments <em>cannot</em> be replaced!</p>
+<p>It is also particularly important to test that the <link class="ok"> <a href="org.zalando.grafter.TestConfiguration.html" tooltip="" class="ok">application itself is properly configured</a></link>.</p>
+</div>
+
+</div>
+
+</body>
+</html>

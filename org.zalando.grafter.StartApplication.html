@@ -1,0 +1,74 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Start the application</title>
+    <link href="./images/s2.ico"                                   type="image/x-icon" rel="specs2 icon"/>
+    <link href="./css/opensans-fonts.css"                          type="text/css"     rel="stylesheet" />
+    <link href="./css/bootstrap.min.css"                           type="text/css"     rel="stylesheet" />
+    <link href="./css/font-awesome.min.css"                        type="text/css"     rel="stylesheet" />
+    <link href="./css/prettify.css"                                type="text/css"     rel="stylesheet" />
+    <link href="./css/tabber.css"                                  type="text/css"     rel="stylesheet" />
+    <link href="./css/tipuesearch.css"                             type="text/css"     rel="stylesheet" />
+    <link href="./css/specs2.css"                                  type="text/css"     rel="stylesheet" />
+    <link href="./css/specs2-user.css"                             type="text/css"     rel="stylesheet" />
+
+    <script src="./javascript/jquery.js"                           type="text/javascript"></script>
+    <script src="./javascript/jquery.jstree.js"                    type="text/javascript"></script>
+    <script src="./javascript/tabber.js"                           type="text/javascript"></script>
+    <script src="./javascript/tabber_start.js"                     type="text/javascript"></script>
+    <script src="./javascript/prettify.js"                         type="text/javascript"></script>
+    <script src="./javascript/specs2.js"                           type="text/javascript"></script>
+    <script src="./javascript/specs2-user.js"                      type="text/javascript"></script>
+    <script src="./javascript/tipuesearch/tipuesearch_set.js"      type="text/javascript"></script>
+    <script src="./javascript/tipuesearch/tipuesearch_contents.js" type="text/javascript"></script>
+    <script src="./javascript/tipuesearch/tipuesearch.min.js"      type="text/javascript"></script>
+
+</head>
+<body onload="prettyPrint(); tabberAutomatic([])">
+
+<div class="container">
+
+<div class="col-md-1"></div>
+
+<div class="col-md-1"></div>
+
+
+
+
+<div class="col-md-10 col-sm-9 col-xs-9">
+<h1>Start the application</h1>
+<div id="tipue_search_content"></div>
+
+<p>An application which is <link class="ok"> <a href="org.zalando.grafter.Concepts.html" tooltip="" class="ok">instantiated</a></link> and has <link class="ok"> <a href="org.zalando.grafter.CreateSingletons.html" tooltip="" class="ok">proper singletons</a></link> can now be started.</p>
+<p>The components which can be “started” need to implement the <code class="prettyprint">Start</code> interface and define a <code class="prettyprint">start</code> method:</p>
+<pre><code class="prettyprint">import org.zalando.grafter.{Start, StartResult}
+import cats.Eval
+
+case class DoobieDatabase(config: DatabaseConfig) extends Start {
+  def start: Eval[StartResult] =
+    StartResult.eval(&quot;starting the database&quot;) {
+      println(&quot;start the database here&quot;)
+    }
+}</code></pre>
+<p>Then starting the whole application is just a matter of calling <code class="prettyprint">startAll</code>:</p>
+<pre><code class="prettyprint">import org.zalando.grafter.syntax.rewriter._
+
+val start: Eval[List[StartResult]] =
+  application.startAll
+
+val results = start.value
+
+if (results.forall(_.success))
+  println(&quot;ok&quot;)
+else
+  println(&quot;Something went wrong &quot;+results.mkString(&quot;\n&quot;))</code></pre>
+<p><code class="prettyprint">startAll</code> is going to recursively, <strong>bottom up</strong>, call all the components with a <code class="prettyprint">Start</code> interface and collect the <code class="prettyprint">StartResults</code>.</p>
+<h3 id="stop-the-application">Stop the application</h3>
+<p>The application can also be stopped in the same manner. <code class="prettyprint">stopAll</code> will stop each component implementing <code class="prettyprint">Stop</code> from the top down.</p>
+<p>The major difference between the <code class="prettyprint">startAll</code> and <code class="prettyprint">stopAll</code> is that <em>all</em> the components will try to be stopped regardless of failures.</p>
+</div>
+
+</div>
+
+</body>
+</html>

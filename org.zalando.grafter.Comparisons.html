@@ -1,0 +1,65 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Comparisons</title>
+    <link href="./images/s2.ico"                                   type="image/x-icon" rel="specs2 icon"/>
+    <link href="./css/opensans-fonts.css"                          type="text/css"     rel="stylesheet" />
+    <link href="./css/bootstrap.min.css"                           type="text/css"     rel="stylesheet" />
+    <link href="./css/font-awesome.min.css"                        type="text/css"     rel="stylesheet" />
+    <link href="./css/prettify.css"                                type="text/css"     rel="stylesheet" />
+    <link href="./css/tabber.css"                                  type="text/css"     rel="stylesheet" />
+    <link href="./css/tipuesearch.css"                             type="text/css"     rel="stylesheet" />
+    <link href="./css/specs2.css"                                  type="text/css"     rel="stylesheet" />
+    <link href="./css/specs2-user.css"                             type="text/css"     rel="stylesheet" />
+
+    <script src="./javascript/jquery.js"                           type="text/javascript"></script>
+    <script src="./javascript/jquery.jstree.js"                    type="text/javascript"></script>
+    <script src="./javascript/tabber.js"                           type="text/javascript"></script>
+    <script src="./javascript/tabber_start.js"                     type="text/javascript"></script>
+    <script src="./javascript/prettify.js"                         type="text/javascript"></script>
+    <script src="./javascript/specs2.js"                           type="text/javascript"></script>
+    <script src="./javascript/specs2-user.js"                      type="text/javascript"></script>
+    <script src="./javascript/tipuesearch/tipuesearch_set.js"      type="text/javascript"></script>
+    <script src="./javascript/tipuesearch/tipuesearch_contents.js" type="text/javascript"></script>
+    <script src="./javascript/tipuesearch/tipuesearch.min.js"      type="text/javascript"></script>
+
+</head>
+<body onload="prettyPrint(); tabberAutomatic([])">
+
+<div class="container">
+
+<div class="col-md-1"></div>
+
+<div class="col-md-1"></div>
+
+
+
+
+<div class="col-md-10 col-sm-9 col-xs-9">
+<h1>Comparisons</h1>
+<div id="tipue_search_content"></div>
+
+<p>There are many libraries or approaches for doing <a href="https://en.wikipedia.org/wiki/Dependency_injection">dependency injection</a> in Scala.</p>
+<p>Libraries:</p>
+<ul>
+<li><a href="https://github.com/adamw/macwire">MacWire</a></li>
+<li><a href="https://github.com/google/guice">Guice</a></li>
+<li><a href="https://github.com/scaldi/scaldi">Scaladi</a></li>
+</ul>
+<p>Design Patterns:</p>
+<ul>
+<li><a href="http://www.cakesolutions.net/teamblogs/2011/12/19/cake-pattern-in-depth">Cake pattern</a></li>
+</ul>
+<p>The main differences between Grafter and other libraries are the following:</p>
+<ul>
+<li><p>Grafter components directly have <code class="prettyprint">@reader</code> annotation which provide a way to “wire” them with their dependencies once an application configuration is available. Other libraries generally require a separate “module” to declare those “bindings”</p></li>
+<li><p>in Grafter each interface needs to have at least a default implementation. This is not required with other libraries</p></li>
+<li><p>there is no “interceptors” or “scoping” in Grafter. The only thing you can do is to <code class="prettyprint">modify</code> or <code class="prettyprint">replace</code> components</p></li>
+<li><p>the “lifecycle” part (starting components) is completely separated from the “instantiation/configuration” part</p></li>
+</ul>
+</div>
+
+</div>
+
+</body>
+</html>

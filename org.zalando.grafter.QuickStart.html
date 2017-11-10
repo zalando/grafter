@@ -1,0 +1,111 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Quick Start</title>
+    <link href="./images/s2.ico"                                   type="image/x-icon" rel="specs2 icon"/>
+    <link href="./css/opensans-fonts.css"                          type="text/css"     rel="stylesheet" />
+    <link href="./css/bootstrap.min.css"                           type="text/css"     rel="stylesheet" />
+    <link href="./css/font-awesome.min.css"                        type="text/css"     rel="stylesheet" />
+    <link href="./css/prettify.css"                                type="text/css"     rel="stylesheet" />
+    <link href="./css/tabber.css"                                  type="text/css"     rel="stylesheet" />
+    <link href="./css/tipuesearch.css"                             type="text/css"     rel="stylesheet" />
+    <link href="./css/specs2.css"                                  type="text/css"     rel="stylesheet" />
+    <link href="./css/specs2-user.css"                             type="text/css"     rel="stylesheet" />
+
+    <script src="./javascript/jquery.js"                           type="text/javascript"></script>
+    <script src="./javascript/jquery.jstree.js"                    type="text/javascript"></script>
+    <script src="./javascript/tabber.js"                           type="text/javascript"></script>
+    <script src="./javascript/tabber_start.js"                     type="text/javascript"></script>
+    <script src="./javascript/prettify.js"                         type="text/javascript"></script>
+    <script src="./javascript/specs2.js"                           type="text/javascript"></script>
+    <script src="./javascript/specs2-user.js"                      type="text/javascript"></script>
+    <script src="./javascript/tipuesearch/tipuesearch_set.js"      type="text/javascript"></script>
+    <script src="./javascript/tipuesearch/tipuesearch_contents.js" type="text/javascript"></script>
+    <script src="./javascript/tipuesearch/tipuesearch.min.js"      type="text/javascript"></script>
+
+</head>
+<body onload="prettyPrint(); tabberAutomatic([])">
+
+<div class="container">
+
+<div class="col-md-1"></div>
+
+<div class="col-md-1"></div>
+
+
+
+
+<div class="col-md-10 col-sm-9 col-xs-9">
+<h1>Quick Start</h1>
+<div id="tipue_search_content"></div>
+
+<h3 id="installation">Installation</h3>
+<p>To use Grafter you need add it as a dependency in your sbt build settings:</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">libraryDependencies += <span class="st">&quot;org.zalando&quot;</span> %% <span class="st">&quot;grafter&quot;</span> % <span class="st">&quot;2.3.1&quot;</span>
+
+<span class="co">// you also need the macros plugin for the grafter annotations</span>
+<span class="fu">addCompilerPlugin</span>(<span class="st">&quot;org.scalamacros&quot;</span> % <span class="st">&quot;paradise&quot;</span> % <span class="st">&quot;2.1.0&quot;</span> cross CrossVersion.<span class="fu">full</span>)</code></pre></div>
+<h3 id="your-first-application">Your first application</h3>
+<p>Here is a minimal example of an application using grafter</p>
+<pre><code class="prettyprint">import org.zalando.grafter.macros.{readers, reader, defaultReader}
+import org.zalando.grafter.{Start, StartResult}
+import org.zalando.grafter.syntax.rewriter._
+import cats.Eval
+
+// CONFIGURATION
+@readers
+case class ApplicationConfig(
+ http: HttpConfig,
+ db:   DbConfig)
+
+case class HttpConfig(host: String, port: Int)
+
+case class DbConfig(url: String)
+
+// COMPONENTS
+@reader
+case class HttpServer(config: HttpConfig) extends Start {
+  def start: Eval[StartResult] =
+    StartResult.eval(&quot;starting the http server&quot;)(println(&quot;http server started&quot;))
+}
+
+@defaultReader[PostgresDatabase]
+trait Database {
+  def count(query: String): Int
+}
+
+@reader
+case class PostgresDatabase(config: DbConfig) extends Database with Start {
+  def count(query: String): Int = 0
+
+  def start: Eval[StartResult] =
+    StartResult.eval(&quot;starting the database&quot;)(println(&quot;db started&quot;))
+}
+
+// TOP-LEVEL APPLICATION
+@reader
+case class Application(httpServer: HttpServer, database: Database)
+
+// MAIN METHOD
+def main(args: Array[String]): Unit = {
+
+  val config: ApplicationConfig =
+    ApplicationConfig(HttpConfig(&quot;localhost&quot;, 8080), DbConfig(&quot;jdbc://postgres&quot;))
+
+  val application: Application =
+    Application.reader[ApplicationConfig].apply(config).singletons
+
+  val started = application.startAll.value
+
+  if (started.forall(_.success))
+    println(&quot;application started successfully&quot;)
+  else
+    println(started.mkString(&quot;\n&quot;))
+}</code></pre>
+<p>As you can see in the main method, building the application from its configuration and starting it is just 2 lines of code. Read the page on <link class="ok"> <a href="org.zalando.grafter.Concepts.html" tooltip="" class="ok">concepts</a></link> to understand how it all works.</p>
+</div>
+
+</div>
+
+</body>
+</html>
