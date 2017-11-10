@@ -5,7 +5,7 @@
 [![Maven Central](https://img.shields.io/maven-central/v/org.zalando/grafter_2.12.svg)](https://maven-badges.herokuapp.com/maven-central/org.zalando/grafter_2.12)
 [![Codecove](https://codecov.io/github/zalando/grafter/coverage.svg?precision=2)
 
-![](guide/src/test/resources/images/grafter.png|width=100)
+<img src="guide/src/test/resources/images/grafter.png" width="400px"/>
 
 ## What's wrong with constructor injection again?
 
