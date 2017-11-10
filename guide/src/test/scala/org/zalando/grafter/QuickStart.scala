@@ -63,7 +63,7 @@ def main(args: Array[String]): Unit = {
     ApplicationConfig(HttpConfig("localhost", 8080), DbConfig("jdbc://postgres"))
 
   val application: Application =
-    Application.reader[ApplicationConfig].apply(config)
+    Application.reader[ApplicationConfig].apply(config).singletons
 
   val started = application.startAll.value
 

@@ -19,12 +19,17 @@ trait UserOperations[F[_]] {
 }
 
 @reader
-case class DatabaseUserOperations[F[_]](config: DbConfig)(implicit m: Monad[F]) extends UserOperations[F] {
+case class DatabaseUserOperations[F[_]](config: DbConfig)(implicit val m: Monad[F]) extends UserOperations[F] {
+
   def getUser(name: String): F[User] = ???
   def createUser(name: String): F[User] = ???
 
 }
 }}
+
+As you can see there is a minor drawback because you would probably like to write `case class DatabaseUserOperations[F[_] : Monad]`.
+This is not currently possible because of [this Scala bug](https://github.com/scala/bug/issues/10589). Please vote for it
+or even better propose a PR on the Scala project!
 
 """
 }
