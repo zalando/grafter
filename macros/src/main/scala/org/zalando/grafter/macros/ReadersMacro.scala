@@ -16,33 +16,85 @@ object ReadersMacro {
       annotationInputs(c)(annotationName)(annottees)
 
     classTree match {
-      case ClassDef(_, className, _, Template(_, _, fields)) =>
-        val params = removeDuplicatedTypes(c)(fieldsNamesAndTypes(c)(fields))
+      case ClassDef(_, className, typeParams, Template(_, _, fields)) =>
+        typeParams match {
+          case Nil =>
+            val params = removeDuplicatedTypes(c)(fieldsNamesAndTypes(c)(fields))
 
-        val implicitReaders =
-          params.map { case (fieldName, fieldType) =>
-            val readerName = TermName(name(fieldName) + "Reader")
+            val implicitReaders =
+              params.map { case (fieldName, fieldType) =>
+                val readerName = TermName(name(fieldName) + "Reader")
 
-            c.Expr[Any](
+                c.Expr[Any](
+                  q"""
+                       implicit def $readerName: cats.data.Reader[$className, $fieldType] =
+                         cats.data.Reader(_.${TermName(name(fieldName))})""")
+              }
+
+            def readerIdentity = c.Expr[Any] {
               q"""
-           implicit def $readerName: cats.data.Reader[$className, $fieldType] =
-             cats.data.Reader(_.${TermName(name(fieldName))})""")
-          }
-
-        def readerIdentity = c.Expr[Any] {
-          q"""
           implicit def ${TermName(className.toString.uncapitalize+"Reader")}: cats.data.Reader[$className, $className] =
             cats.data.Reader(identity)
       """
+            }
+
+            outputs(c)(classTree, className, companionTree) {
+              q"""
+                   ..$implicitReaders
+
+                   ..$readerIdentity
+               """
+            }
+
+
+          // if the class contains a type parameter T we generate specific
+          // reader instances for the members of the form (A, T) where the reader
+          // only returns A
+          case tpe :: Nil =>
+            val params = removeDuplicatedTypes(c)(fieldsNamesAndTypes(c)(fields))
+            val typeName = internal.reificationSupport.freshTypeName("A")
+
+            val implicitReaders =
+              params.map { case (fieldName, fieldType) =>
+                val readerName = TermName(name(fieldName) + "Reader")
+
+                fieldType match {
+                  case AppliedTypeTree(tp, t1 :: t2 :: Nil) if tpe.name.toString == t2.toString =>
+                    c.Expr[Any](
+                      q"""
+                         implicit def $readerName[$typeName]: cats.data.Reader[$className[$typeName], $t1] =
+                           cats.data.Reader(_.${TermName(name(fieldName))}._1)""")
+
+                  case _ =>
+                    c.Expr[Any](
+                      q"""
+                           implicit def $readerName[$typeName]: cats.data.Reader[$className[$typeName], $fieldType] =
+                             cats.data.Reader(_.${TermName(name(fieldName))})""")
+                 }
+
+                }
+
+
+            def readerIdentity = c.Expr[Any] {
+              q"""
+                   implicit def ${TermName(className.toString.uncapitalize+"Reader")}[$typeName]: cats.data.Reader[$className[$typeName], $className[$typeName]] =
+                     cats.data.Reader(identity)
+              """
+            }
+
+            outputs(c)(classTree, className, companionTree) {
+              q"""
+                 ..$implicitReaders
+
+                 ..$readerIdentity
+              """
+            }
+
+          case other =>
+            c.abort(c.macroApplication.pos, s"you can only use the @$annotationName annotation for a class having 0 or 1 type parameter, found $other")
         }
 
-        outputs(c)(classTree, className, companionTree) {
-          q"""
-         ..$implicitReaders
 
-         ..$readerIdentity
-      """
-        }
 
       case other =>
         c.abort(c.macroApplication.pos, s"the @$annotationName annotation must annotate a class, found $other")

@@ -32,6 +32,7 @@ This user guide is divided in 4 parts:
     - ${"Test the application" ~ TestApplication mute}
     - ${"Test the configuration" ~ TestConfiguration mute}
     - ${"Use the \"finally tagless style\"" ~ FinallyTagless mute}
+    - ${"Define typesafe configurations for specific environments" ~ TypesafeConfigurations mute}
 <p/>
 
  1. Understand
