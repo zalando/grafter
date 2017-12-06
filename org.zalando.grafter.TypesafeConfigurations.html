@@ -1,7 +1,7 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>Main concepts</title>
+    <title>Typesafe configurations</title>
     <link href="./images/s2.ico"                                   type="image/x-icon" rel="specs2 icon"/>
     <link href="./css/opensans-fonts.css"                          type="text/css"     rel="stylesheet" />
     <link href="./css/bootstrap.min.css"                           type="text/css"     rel="stylesheet" />
@@ -143,78 +143,117 @@
               </ul>
                   </ul>
     </li>
-              </ul></div><script>$(function () { $('#tree').jstree({'core':{'initially_open':['index','org-zalando-grafter-concepts'], 'animation':200}, 'themes' : {'theme': 'default','url': './css/themes/default/style.css'}, 'plugins':['themes', 'html_data']}); });</script>
+              </ul></div><script>$(function () { $('#tree').jstree({'core':{'initially_open':['index','org-zalando-grafter-typesafeconfigurations'], 'animation':200}, 'themes' : {'theme': 'default','url': './css/themes/default/style.css'}, 'plugins':['themes', 'html_data']}); });</script>
 
 </div>
 </div>
 
 
 <div class="col-md-10 col-sm-9 col-xs-9">
-<h1>Main concepts</h1>
+<h1>Typesafe configurations</h1>
 <div id="tipue_search_content"></div>
 
-<h3 id="readers-all-the-way-down">Readers all the way down</h3>
-<p>An application such as the one shown in <link class="ok"> <a href="org.zalando.grafter.QuickStart.html" tooltip="" class="ok">QuickStart</a></link> is merely a case class having its dependencies modeled as attributes.</p>
-<p>Similarly the application configuration is a case class containing every piece of information needed to build the <code class="prettyprint">Application</code>. How do we connect the 2?</p>
-<p>This is the purpose of the <code class="prettyprint">@reader</code> annotation on <code class="prettyprint">Application</code>. The <code class="prettyprint">@reader</code> annotation generates a <code class="prettyprint">reader</code> method in the companion object of <code class="prettyprint">Application</code>:</p>
-<pre><code class="prettyprint">import cats.data.Reader
+<p>In some projects there can be several configurations for different “environments”, say for “Production” and “Development”. For example:</p>
+<pre><code class="prettyprint">@readers
+case class Config(
+  threadsNb:      Int,
+  defaultTimeout: FiniteDuration,
+  paymentsUri:    Uri,
+  ordersUri:      Uri)
 
-object Application {
+val productionConfig: Config =
+  Config(
+    threadsNb = 8,
+    defaultTimeout = 3.seconds,
+    paymentsUri = Uri(&quot;http://acme.org/payments&quot;),
+    ordersUri   = Uri(&quot;http://acme.org/orders&quot;))
 
-  implicit def reader[A](implicit r1: Reader[A, HttpServer], r2: Reader[A, Database]): Reader[A, Application] =
-    Reader(a =&gt; Application(r1(a), r2(a)))
+val developmentConfig: Config =
+  Config(
+    threadsNb = 8,
+    defaultTimeout = 3.seconds,
+    paymentsUri = Uri(&quot;http://acme-test.org/payments&quot;),
+    ordersUri   = Uri(&quot;http://acme-test.org/orders&quot;))</code></pre>
+<p>Since <code class="prettyprint">Config</code> is just a case class which can have lots of fields it can be very tempting to derive the development config from the production config:</p>
+<pre><code class="prettyprint">val productionConfig: Config =
+  Config(
+    threadsNb = 8,
+    defaultTimeout = 3.seconds,
+    paymentsUri = Uri(&quot;http://acme.org/payments&quot;),
+    ordersUri   = Uri(&quot;http://acme.org/orders&quot;))
 
-}</code></pre>
-<p>The declaration above states that:</p>
-<ul>
-<li>if there is a implicit <code class="prettyprint">Reader</code> instance to create an <code class="prettyprint">HttpServer</code> from any object of type <code class="prettyprint">A</code></li>
-<li>if there is a implicit <code class="prettyprint">Reader</code> instance to create a <code class="prettyprint">Database</code> from any object of type <code class="prettyprint">A</code></li>
-<li><em>then</em> there is an implicit <code class="prettyprint">Reader</code> instance to create an <code class="prettyprint">Application</code> from any object of type <code class="prettyprint">A</code>
-<p/></li>
-</ul>
-<p>This means that we can instantiate the <code class="prettyprint">Application</code> from an <code class="prettyprint">ApplicationConfig</code>, provided that we get a way to instantiate an <code class="prettyprint">HttpServer</code> and a <code class="prettyprint">Database</code> from an <code class="prettyprint">ApplicationConfig</code>. The <code class="prettyprint">@reader</code> annotation on <code class="prettyprint">HttpServer</code> gives us:</p>
-<pre><code class="prettyprint">import cats.data.Reader
+val developmentConfig: Config =
+  productionConfig.copy(
+    paymentsUri = Uri(&quot;http://acme-test.org/payments&quot;),
+    ordersUri   = Uri(&quot;http://acme-test.org/orders&quot;)
+  )</code></pre>
+<p>The good thing here is that we are removing some duplication in our declarations because <code class="prettyprint">developmentConfig</code> sort of inherits from <code class="prettyprint">productionConfig</code>. This is slightly dangerous though because if you forget to override one of the production fields, like <code class="prettyprint">paymentsUri</code> you might accidentally run some code against production while executing your tests!</p>
+<p>The opposite situation, where you define <code class="prettyprint">productionConfig</code> in terms of <code class="prettyprint">developmentConfig</code> is not enviable either because you might run your production application against tests services and some data might be simply lost.</p>
+<h3 id="making-it-typesafe">Making it typesafe</h3>
+<p>It is possible to make the configuration typesafe with one simple type parameter:</p>
+<pre><code class="prettyprint">trait Prod
+object Prod extends Prod
 
-object HttpServer {
+trait Dev
+object Dev extends Dev
 
-  implicit def reader[A](implicit r1: Reader[A, HttpConfig]): Reader[A, HttpServer] =
-    Reader(a =&gt; HttpServer(r1(a)))
+type -&gt;[A, B] = (A, B)
 
-}</code></pre>
-<p>How can we build an <code class="prettyprint">HttpConfig</code> from the <code class="prettyprint">ApplicationConfig</code>? This is the purpose of the <code class="prettyprint">@readers</code> annotation on <code class="prettyprint">ApplicationConfig</code>. This will generate concrete readers for each member of <code class="prettyprint">ApplicationConfig</code>:</p>
-<pre><code class="prettyprint">object ApplicationConfig {
+@readers
+case class Config[C](
+  threadsNb:      Int,
+  defaultTimeout: FiniteDuration,
+  paymentsUri:    Uri -&gt; C,
+  ordersUri:      Uri -&gt; C)
 
-  implicit def httpConfigReader: Reader[ApplicationConfig, HttpConfig] =
-    Reader(_.httpConfig)
+val prodPaymentsUri: Uri -&gt; Prod =
+  Uri(&quot;http://acme.org/payments&quot;) -&gt; Prod
 
-  implicit def dbConfigReader: Reader[ApplicationConfig, DbConfig] =
-    Reader(_.dbConfig)
-}</code></pre>
-<p>From there the magic of implicit resolution will give us a valid <code class="prettyprint">Application.reader[ApplicationConfig]</code>. Well, almost. You might have noticed that <code class="prettyprint">Database</code> is an interface, not a case class. How can we instantiate such an interface from the application configuration?</p>
-<h3 id="deal-with-interfaces">Deal with interfaces</h3>
-<p>For interfaces we need a special annotation which will specify a concrete implementation to instantiate, the <code class="prettyprint">@defaultReader</code> annotation. It generates the following reader:</p>
-<pre><code class="prettyprint">object Database {
-  implicit def reader[A]: Reader[A, PostgresDatabase] =
-    PostgresDatabase.reader[A]
-}</code></pre>
-<p>This <code class="prettyprint">Reader</code> instance is simply delegating to the <code class="prettyprint">Reader</code> instance of <code class="prettyprint">PostgresDatabase</code> and we now know that we have such an instance because there is a <code class="prettyprint">@reader</code> annotation on <code class="prettyprint">PostgresDatabase</code>.</p>
-<h3 id="warning">Warning</h3>
-<p><img src="images/icon_failure_sml.gif" alt="warning" /> ** All the components must be totally side-effects free when instantiated! ** They must not start a database connection or a http server or even do some logging!</p>
-<p>Indeed, when using <code class="prettyprint">Readers</code> to create components, the same <code class="prettyprint">Database</code> component can be instantiated from different paths in the application graph and become “duplicated” at that stage (see <link class="ok"> <a href="org.zalando.grafter.CreateSingletons.html" tooltip="" class="ok">create singletons</a></link> to fix this). So it is particularly important that the “start” of an application is done in a very controlled way: <link class="ok"> <a href="org.zalando.grafter.StartApplication.html" tooltip="" class="ok">start the application</a></link>.</p>
-<h3 id="summary">Summary</h3>
-<p>In summary, to wire an application with Grafter you need to annotate:</p>
-<ul>
-<li>components with <code class="prettyprint">@reader</code></li>
-<li>interfaces with <code class="prettyprint">@defaultReader</code></li>
-<li>the configuration with <code class="prettyprint">@readers</code>
-<p/></li>
-</ul>
-<p>There are a few more things you might need to know:</p>
-<ul>
-<li>how to <link class="ok"> <a href="org.zalando.grafter.CreateSingletons.html" tooltip="" class="ok">create singletons</a></link>?</li>
-<li>how to <link class="ok"> <a href="org.zalando.grafter.StartApplication.html" tooltip="" class="ok">start the application</a></link>?</li>
-<li>how to <link class="ok"> <a href="org.zalando.grafter.TestApplication.html" tooltip="" class="ok">test the application</a></link>?</li>
-</ul>
+val prodOrdersUri: Uri -&gt; Prod =
+  Uri(&quot;http://acme-test.org/orders&quot;) -&gt; Prod
+
+val devPaymentsUri: Uri -&gt; Dev =
+  Uri(&quot;http://acme-test.org/payments&quot;) -&gt; Dev
+
+val devOrdersUri: Uri -&gt; Dev =
+  Uri(&quot;http://acme-test.org/orders&quot;) -&gt; Dev
+
+val productionConfig: Config[Prod] =
+  Config(
+    threadsNb = 8,
+    defaultTimeout = 3.seconds,
+    paymentsUri = prodPaymentsUri,
+    ordersUri   = prodOrdersUri)
+
+val developmentConfig: Config[Dev] =
+  productionConfig.copy(
+    paymentsUri = devPaymentsUri,
+    ordersUri   = devOrdersUri
+  )
+
+// Now it is a lot harder to mix-up configurations
+// The following 2 tentatives of mixing-up production and development
+// configurations do not compile
+/*
+
+val accidentalProdOverride: Config[Prod] =
+  productionConfig.copy(paymentsUri = devPaymentsUri)
+
+val accidentalDevOverride: Config[Dev] =
+  developmentConfig.copy(paymentsUri = prodPaymentsUri)
+*/
+
+// But this compiles ok
+val sandboxPaymentsUri: Uri -&gt; Dev =
+  Uri(&quot;http://acme-sandbox.org/payments&quot;) -&gt; Dev
+
+val okDevOverride: Config[Dev] =
+  developmentConfig.copy(paymentsUri = sandboxPaymentsUri)</code></pre>
+<h3 id="readers">Readers</h3>
+<p>What about the <code class="prettyprint">@readers</code> annotation? What does it generate for fields annotated with <code class="prettyprint">Prod</code> or <code class="prettyprint">Dev</code>?</p>
+<p>The <code class="prettyprint">readers</code> annotation is smart enough to recognize those fields and create a <code class="prettyprint">Reader</code> instance stripping out the environment annotation, for example:</p>
+<pre><code class="prettyprint">implicit def paymentsUriReader[A1]: Reader[Config[A1], Uri] =
+  Reader(_.paymentsUri._1)</code></pre>
 </div>
 
 <script>
