@@ -1,8 +1,8 @@
 
-lazy val catsVersion       = "0.9.0"
+lazy val catsVersion       = "1.0.1"
 lazy val kiamaVersion      = "2.1.0"
-lazy val specs2Version     = "4.0.1"
-lazy val shapelessVersion  = "2.3.2"
+lazy val specs2Version     = "4.0.2"
+lazy val shapelessVersion  = "2.3.3"
 
 libraryDependencies in Global ++=
   cats      ++
