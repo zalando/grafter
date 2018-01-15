@@ -1,1 +1,1 @@
-version in Global := "2.4.1"
+version in Global := "2.5.0"
