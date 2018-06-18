@@ -25,87 +25,135 @@ object ReadersMacro {
               params.map { case (fieldName, fieldType) =>
                 val readerName = TermName(name(fieldName) + "Reader")
 
-                c.Expr[Any](
+                c.Expr[Any] {
                   q"""
-                       implicit def $readerName: cats.data.Reader[$className, $fieldType] =
-                         cats.data.Reader(_.${TermName(name(fieldName))})""")
+                    implicit def $readerName: cats.data.Reader[$className, $fieldType] =
+                      cats.data.Reader(_.${TermName(name(fieldName))})
+                  """
+                }
               }
 
             def readerIdentity = c.Expr[Any] {
               q"""
-          implicit def ${TermName(className.toString.uncapitalize+"Reader")}: cats.data.Reader[$className, $className] =
-            cats.data.Reader(identity)
-      """
+                implicit def ${TermName(className.toString.uncapitalize+"Reader")}: cats.data.Reader[$className, $className] =
+                  cats.data.Reader(identity)
+              """
             }
 
             outputs(c)(classTree, className, companionTree) {
               q"""
-                   ..$implicitReaders
+                ..$implicitReaders
 
-                   ..$readerIdentity
-               """
+                ..$readerIdentity
+              """
             }
 
-
-          // if the class contains a type parameter T we generate specific
-          // reader instances for the members of the form (A, T) where the reader
-          // only returns A
           case tpe :: Nil =>
-            val params = removeDuplicatedTypes(c)(fieldsNamesAndTypes(c)(fields))
-            val typeName = internal.reificationSupport.freshTypeName("A")
+            tpe.tparams match {
+              // if the class contains a type parameter T we generate specific
+              // reader instances for the members of the form (A, T) where the reader
+              // only returns A
+              case Nil =>
+                val params = removeDuplicatedTypes(c)(fieldsNamesAndTypes(c)(fields))
+                val typeName = internal.reificationSupport.freshTypeName("A")
 
-            val implicitReaders =
-              params.map { case (fieldName, fieldType) =>
-                val readerName = TermName(name(fieldName) + "Reader")
+                val implicitReaders =
+                  params.map { case (fieldName, fieldType) =>
+                    val readerName = TermName(name(fieldName) + "Reader")
 
-                fieldType match {
-                  case AppliedTypeTree(tp, t1 :: t2 :: Nil) if tpe.name.toString == t2.toString =>
-                    c.Expr[Any](
-                      q"""
-                         implicit def $readerName[$typeName]: cats.data.Reader[$className[$typeName], $t1] =
-                           cats.data.Reader(_.${TermName(name(fieldName))}._1)""")
+                    fieldType match {
+                      case AppliedTypeTree(tp, t1 :: t2 :: Nil) if tpe.name.toString == t2.toString =>
+                        c.Expr[Any] {
+                          q"""
+                            implicit def $readerName[$typeName]: cats.data.Reader[$className[$typeName], $t1] =
+                              cats.data.Reader(_.${TermName(name(fieldName))}._1)
+                          """
+                        }
 
-                  case _ =>
-                    c.Expr[Any](
-                      q"""
-                           implicit def $readerName[$typeName]: cats.data.Reader[$className[$typeName], $fieldType] =
-                             cats.data.Reader(_.${TermName(name(fieldName))})""")
-                 }
+                      case _ =>
+                        c.Expr[Any]{
+                          q"""
+                            implicit def $readerName[$typeName]: cats.data.Reader[$className[$typeName], $fieldType] =
+                              cats.data.Reader(_.${TermName(name(fieldName))})
+                          """
+                        }
+                    }
+                  }
 
+                def readerIdentity = c.Expr[Any] {
+                  q"""
+                      implicit def ${TermName(className.toString.uncapitalize+"Reader")}[$typeName]: cats.data.Reader[$className[$typeName], $className[$typeName]] =
+                        cats.data.Reader(identity)
+                  """
                 }
 
+                outputs(c)(classTree, className, companionTree) {
+                  q"""
+                    ..$implicitReaders
 
-            def readerIdentity = c.Expr[Any] {
-              q"""
-                   implicit def ${TermName(className.toString.uncapitalize+"Reader")}[$typeName]: cats.data.Reader[$className[$typeName], $className[$typeName]] =
-                     cats.data.Reader(identity)
-              """
-            }
+                    ..$readerIdentity
+                  """
+              }
 
-            outputs(c)(classTree, className, companionTree) {
-              q"""
-                 ..$implicitReaders
+              // if the class contains a higher order type parameter F[_] we generate
+              // specific reader instances for the members of the form A[F].
+              case _ :: Nil =>
+                val params = removeDuplicatedTypes(c)(fieldsNamesAndTypes(c)(fields))
 
-                 ..$readerIdentity
-              """
+                val implicitReaders =
+                  params.map { case (fieldName, fieldType) =>
+                    val readerName = TermName(name(fieldName) + "Reader")
+
+                    fieldType match {
+                      case AppliedTypeTree(tp, t1 :: Nil) if t1.toString == tpe.name.toString =>
+                        c.Expr[Any] {
+                          q"""
+                            implicit def $readerName[F[_]]: cats.data.Reader[$className[F], $tp[F]] =
+                              cats.data.Reader(_.${TermName(name(fieldName))})
+                          """
+                        }
+
+                      case _ =>
+                        c.Expr[Any] {
+                          q"""
+                            implicit def $readerName: cats.data.Reader[$className[Nothing], $fieldType] =
+                              cats.data.Reader(_.${TermName(name(fieldName))})
+                          """
+                        }
+                    }
+                  }
+
+                def readerIdentity = c.Expr[Any] {
+                  q"""
+                    implicit def ${TermName(className.toString.uncapitalize+"Reader")}[F[_]]: cats.data.Reader[$className[F], $className[F]] =
+                      cats.data.Reader(identity)
+                  """
+                }
+
+                outputs(c)(classTree, className, companionTree) {
+                  q"""
+                    ..$implicitReaders
+
+                    ..$readerIdentity
+                  """
+                }
+
+              case other =>
+                c.abort(c.macroApplication.pos, s"you can only use the @$annotationName annotation for a class having 0 or 1 type parameter, found $other")
             }
 
           case other =>
             c.abort(c.macroApplication.pos, s"you can only use the @$annotationName annotation for a class having 0 or 1 type parameter, found $other")
         }
 
-
-
       case other =>
         c.abort(c.macroApplication.pos, s"the @$annotationName annotation must annotate a class, found $other")
     }
 
-
   }
 
   implicit class StringOps(s: String) {
-    def uncapitalize: String =
-      s.take(1).map(_.toLower)++s.drop(1)
+    def uncapitalize: String = s.take(1).map(_.toLower)++s.drop(1)
   }
 }
 

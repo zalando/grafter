@@ -1,7 +1,7 @@
 
-lazy val catsVersion       = "1.0.1"
-lazy val kiamaVersion      = "2.1.0"
-lazy val specs2Version     = "4.0.2"
+lazy val catsVersion       = "1.1.0"
+lazy val kiamaVersion      = "2.2.0"
+lazy val specs2Version     = "4.2.0"
 lazy val shapelessVersion  = "2.3.3"
 
 libraryDependencies in Global ++=
@@ -28,4 +28,3 @@ lazy val specs2 = Seq(
 
 lazy val shapeless =
   Seq("com.chuusai" %% "shapeless" % shapelessVersion)
-

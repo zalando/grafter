@@ -3,7 +3,7 @@ sudo: false
 language: scala
 
 scala:
-  - 2.11.11
+  - 2.11.12
   - 2.12.6
 
 jdk:
@@ -16,4 +16,3 @@ script:
   - sbt -sbt-version 1.1.6 -scala-version $TRAVIS_SCALA_VERSION ';clean ;set every coverageEnabled := true ;testOnly -- xonly ;coverageReport; coverageAggregate' && codecov
   - find $HOME/.sbt -name "*.lock" | xargs rm
   - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
-
