@@ -1,6 +1,3 @@
-import sbt.Keys._
-import sbt._
-import com.ambiata._
 
 lazy val grafter = (project in file(".")).
   settings(
@@ -126,8 +123,7 @@ lazy val publishSettings = Seq(
   publishArtifact in (Test, packageDoc) := true,
   publishArtifact in (Test, packageSrc) := true
 ) ++
-  credentialSettings ++
-  promulgateVersionSettings
+  credentialSettings
 
 lazy val credentialSettings = Seq(
   // For Travis CI - see http://www.cakesolutions.net/teamblogs/publishing-artefacts-to-oss-sonatype-nexus-using-sbt-and-travis-ci
