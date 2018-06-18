@@ -12,12 +12,6 @@ jdk:
 install:
   - pip install --user codecov
 
-# These directories are cached to S3 at the end of the build
-cache:
-  directories:
-    - $HOME/.ivy2/cache
-    - $HOME/.sbt/boot/
-
 script:
   - sbt -sbt-version 1.1.6 -scala-version $TRAVIS_SCALA_VERSION ';clean ;set every coverageEnabled := true ;testOnly -- xonly ;coverageReport; coverageAggregate' && codecov
   - find $HOME/.sbt -name "*.lock" | xargs rm
