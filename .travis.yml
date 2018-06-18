@@ -13,7 +13,6 @@ jdk:
 cache:
   directories:
     - $HOME/.ivy2/cache
-    - $HOME/.sbt/boot/
 
 install:
   - pip install --user codecov
