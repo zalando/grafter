@@ -29,6 +29,21 @@ object ReadersMacro {
                   q"""
                     implicit def $readerName: cats.data.Reader[$className, $fieldType] =
                       cats.data.Reader(_.${TermName(name(fieldName))})
+
+                  """
+                }
+              }
+
+            val implicitTransitiveReaders =
+              params.map { case (fieldName, fieldType) =>
+                val transitiveReaderName = TermName("transitive"+name(fieldName) + "Reader")
+
+                c.Expr[Any] {
+                  q"""
+
+                    implicit def $transitiveReaderName[A](implicit r1: cats.data.Reader[$fieldType, A], r2: cats.data.Reader[$className, $fieldType]): cats.data.Reader[$className, A] =
+                      r2.map(a => r1(a))
+
                   """
                 }
               }
@@ -43,6 +58,7 @@ object ReadersMacro {
             outputs(c)(classTree, className, companionTree) {
               q"""
                 ..$implicitReaders
+                ..$implicitTransitiveReaders
 
                 ..$readerIdentity
               """

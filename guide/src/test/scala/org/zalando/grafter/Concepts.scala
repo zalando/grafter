@@ -1,6 +1,7 @@
 package org.zalando.grafter
 
 import cats.data.Reader
+import org.zalando.grafter.macros.readers
 
 object Concepts extends UserGuidePage { def is = "Main concepts".title ^ s2"""
 
@@ -72,6 +73,21 @@ object ApplicationConfig {
 }
 
 }}
+
+Note that this also works with nested configuration objects. So if `ApplicationConfig` contains other configuration objects, themselves
+holding pieces of the configuration, everything will work fine as long as you use the same `@readers` annotation on the nested types:${snippet{
+
+case class PortConfig(port: Int)
+case class HostConfig(host: String)
+
+// don't forget this annotation!
+@readers
+case class HttpConfig(port: PortConfig, host: HostConfig)
+
+@readers
+case class ApplicationConfig(httpConfig: HttpConfig)
+}}
+
 
 From there the magic of implicit resolution will give us a valid `Application.reader[ApplicationConfig]`. Well, almost.
 You might have noticed that `Database` is an interface, not a case class. How can we instantiate such an interface from
