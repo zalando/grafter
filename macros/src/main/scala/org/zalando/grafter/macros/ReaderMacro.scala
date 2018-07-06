@@ -27,15 +27,17 @@ object ReaderMacro {
         val caseclassParameters = fieldsNamesAndTypes(c)(fields)
         val implicitParameters = implicitFieldsNamesAndTypes(c)(fields)
 
-        val readerImplicitParameters = caseclassParameters
-          .map { case (fieldName, fieldType) =>
-            val readerName = TermName(name(fieldName)+"Reader")
-            c.Expr[ValDef](q"""$readerName: cats.data.Reader[$genericTypeName, $fieldType]""")
-          } ++
+        val implicitReaderParameters =
           implicitParameters.map { case (fieldName, fieldType) =>
             val paramName = TermName(name(fieldName))
             c.Expr[ValDef](q"""$paramName: $fieldType""")
           }
+
+        val readerImplicitParameters = caseclassParameters
+          .map { case (fieldName, fieldType) =>
+            val readerName = TermName(name(fieldName)+"Reader")
+            c.Expr[ValDef](q"""$readerName: cats.data.Reader[$genericTypeName, $fieldType]""")
+          } ++ implicitReaderParameters
 
         val paramNames = caseclassParameters.map(_._1)
         val readValues = paramNames.map { p => q"""val ${TermName("_"+name(p)+"Value")} = ${TermName(name(p)+"Reader")}.apply(r);""" }
@@ -45,15 +47,31 @@ object ReaderMacro {
         typeParams match {
           case tp :: Nil =>
 
-            outputs(c)(classTree, className, companionTree) {
-              q"""
-         implicit def reader[$genericTypeName, $tp](implicit ..$readerImplicitParameters): cats.data.Reader[$genericTypeName, $className[${tp.name}]] = {
-           cats.data.Reader { r =>
-             ..$readValues
-             new ${TypeName(klassName)}(...${List(values)})
-           }
-         }
-       """
+            // if there are no case class parameters we need to create a fake
+            // "unit" parameter to avoid clashes with the "transitiveReader" implicit created by the @readers
+            // annotation. In return the @returns annotation provides an implicit Reader[A, Unit]
+            if (caseclassParameters.isEmpty)
+              outputs(c)(classTree, className, companionTree) {
+                q"""
+                 implicit def reader[$genericTypeName, $tp](implicit unitReader: cats.data.Reader[$genericTypeName, Unit], ..$implicitReaderParameters): cats.data.Reader[$genericTypeName, $className[${tp.name}]] = {
+                   cats.data.Reader { r =>
+                     // to avoid unused value warning
+                     if (true) unitReader else unitReader
+                     new ${TypeName(klassName)}
+                   }
+                 }
+               """
+              }
+            else
+               outputs(c)(classTree, className, companionTree) {
+               q"""
+                 implicit def reader[$genericTypeName, $tp](implicit ..$readerImplicitParameters): cats.data.Reader[$genericTypeName, $className[${tp.name}]] = {
+                   cats.data.Reader { r =>
+                     ..$readValues
+                     new ${TypeName(klassName)}(...${List(values)})
+                   }
+                 }
+               """
             }
 
           case Nil =>

@@ -60,6 +60,9 @@ object ReadersMacro {
                 ..$implicitReaders
                 ..$implicitTransitiveReaders
 
+                implicit def unitReader: cats.data.Reader[$className, Unit] =
+                  cats.data.Reader(_ => ())
+
                 ..$readerIdentity
               """
             }
