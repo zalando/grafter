@@ -1,5 +1,16 @@
 # Grafter
 
+#### Grafter is no longer under active development at Zalando
+
+On March 1st, 2019 Grafter will enter maintenance mode, from that date, Zalando will no longer review or accept pull requests to this project, or make new releases - the final release will reflect what is available in this repository. 
+
+However, going forward Grafter will continue to be maintained by Eric Torreborre at http://github.com/etorreborre/grafter - we ask you to go there for latest changes.
+
+As an open source project driven by Zalando engineers, Grafter has served our Scala projects well over the years and retiring this project is no indicator of lack of Scala use inside Zalando, quite the contrary - this project has simply served its purpose and it is now time to move on.
+
+
+----
+
 [![Join the chat at https://gitter.im/zalando/grafter](https://badges.gitter.im/zalando/grafter.svg)](https://gitter.im/zalando/grafter?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://travis-ci.org/zalando/grafter.svg?branch=master)](https://travis-ci.org/zalando/grafter)
 [![Maven Central](https://img.shields.io/maven-central/v/org.zalando/grafter_2.12.svg)](https://maven-badges.herokuapp.com/maven-central/org.zalando/grafter_2.12)
