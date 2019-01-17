@@ -49,11 +49,11 @@ object ReaderMacro {
 
             // if there are no case class parameters we need to create a fake
             // "unit" parameter to avoid clashes with the "transitiveReader" implicit created by the @readers
-            // annotation. In return the @returns annotation provides an implicit Reader[A, Unit]
+            // annotation. In return the @readers annotation provides an implicit Reader[A, Unit]
             if (caseclassParameters.isEmpty)
               outputs(c)(classTree, className, companionTree) {
                 q"""
-                 implicit def reader[$genericTypeName, $tp](implicit unitReader: cats.data.Reader[$genericTypeName, Unit], ..$implicitReaderParameters): cats.data.Reader[$genericTypeName, $className[${tp.name}]] = {
+                 implicit def reader[$genericTypeName, $tp](implicit unitReader: cats.data.Reader[$genericTypeName, org.zalando.grafter.macros.GrafterUnit], ..$implicitReaderParameters): cats.data.Reader[$genericTypeName, $className[${tp.name}]] = {
                    cats.data.Reader { r =>
                      // to avoid unused value warning
                      if (true) unitReader else unitReader
@@ -75,6 +75,20 @@ object ReaderMacro {
             }
 
           case Nil =>
+            if (caseclassParameters.isEmpty)
+              outputs(c)(classTree, className, companionTree) {
+                q"""
+
+                 implicit def reader[$genericTypeName](implicit unitReader: cats.data.Reader[$genericTypeName, org.zalando.grafter.macros.GrafterUnit], ..$implicitReaderParameters): cats.data.Reader[$genericTypeName, $className] = {
+                   cats.data.Reader { r =>
+                     // to avoid unused value warning
+                     if (true) unitReader else unitReader
+                     new ${TypeName(klassName)}
+                   }
+                 }
+               """
+              }
+            else
             outputs(c)(classTree, className, companionTree) {
               q"""
          implicit def reader[$genericTypeName](implicit ..$readerImplicitParameters): cats.data.Reader[$genericTypeName, $className] = {
@@ -96,6 +110,14 @@ object ReaderMacro {
     }
 
   }
+
+}
+
+case class GrafterUnit()
+
+object GrafterUnit {
+  implicit def unitReader[A]: cats.data.Reader[A, org.zalando.grafter.macros.GrafterUnit] =
+    cats.data.Reader(_ => org.zalando.grafter.macros.GrafterUnit())
 
 }
 
